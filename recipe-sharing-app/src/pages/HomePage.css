@@ -1,0 +1,403 @@
+/* Thêm vào file CSS của HomePage */
+
+/* Tabs điều hướng */
+.recipe-tabs {
+  display: flex;
+  margin: 20px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  margin-right: 10px;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  position: relative;
+}
+
+.tab-button.active {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #4CAF50;
+}
+
+/* Đảm bảo recipes-section có margin top nhỏ hơn */
+.recipes-section {
+  margin-top: 10px;
+}
+
+/* Style cho tin nhắn trống */
+.empty-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+/* Thêm CSS cho tương tác với avatar */
+
+/* Phần container cho avatar để xử lý click events */
+.profile-avatar-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  border: 3px solid #fff;
+  background-color: #f5f5f5;
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+/* Hiệu ứng hover cho avatar */
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 50%;
+}
+
+.profile-avatar-container:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.profile-avatar-container:hover .profile-avatar {
+  transform: scale(1.05);
+}
+
+/* Menu tùy chọn khi click vào avatar */
+.avatar-options {
+  position: absolute;
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 180px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.avatar-options button {
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s;
+}
+
+.avatar-options button:hover {
+  background-color: #f5f5f5;
+}
+
+.avatar-options button i {
+  font-size: 16px;
+  width: 20px;
+  color: #4caf50;
+}
+
+/* Modal xem avatar kích thước lớn */
+.avatar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.avatar-modal {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: zoomIn 0.3s ease;
+}
+
+.avatar-modal-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-modal-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.avatar-modal-close {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  border: none;
+  color: #333;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s;
+}
+
+.avatar-modal-close:hover {
+  background-color: #f0f0f0;
+}
+
+/* Overlay khi đang upload */
+.upload-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  color: white;
+  font-size: 18px;
+}
+
+.upload-spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.profile-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  font-size: 42px;
+}
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Thêm các styles cho bản nháp */
+
+.draft-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.draft-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.draft-link {
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.draft-image {
+  height: 160px;
+  overflow: hidden;
+  position: relative;
+}
+
+.draft-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.draft-placeholder {
+  background-color: #f0f0f0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.draft-placeholder i {
+  font-size: 48px;
+  color: #aaa;
+}
+
+.draft-info {
+  padding: 12px;
+  flex: 1;
+}
+
+.draft-info h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-date {
+  color: #888;
+  font-size: 14px;
+  margin: 0;
+}
+
+.draft-actions {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #eee;
+  justify-content: space-between;
+}
+
+.draft-actions button {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-edit {
+  color: #4c9aff;
+}
+
+.btn-publish {
+  color: #36b37e;
+}
+
+.btn-delete {
+  color: #ff5630;
+}
+
+.draft-actions button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn-edit:hover {
+  background-color: rgba(76, 154, 255, 0.1);
+}
+
+.btn-publish:hover {
+  background-color: rgba(54, 179, 126, 0.1);
+}
+
+.btn-delete:hover {
+  background-color: rgba(255, 86, 48, 0.1);
+}
+
+/* Empty state styling */
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.empty-message {
+  font-size: 18px;
+  color: #888;
+  margin-bottom: 24px;
+}
+
+.btn-create-recipe {
+  display: inline-flex;
+  align-items: center;
+  background-color: #ff6b6b;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-create-recipe i {
+  margin-right: 8px;
+}
+
+.btn-create-recipe:hover {
+  background-color: #ff5252;
+  transform: translateY(-2px);
+}

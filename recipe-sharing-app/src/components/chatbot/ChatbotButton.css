@@ -1,0 +1,27 @@
+.chatbot-trigger-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+.chatbot-trigger-button:hover {
+  transform: scale(1.05);
+  background-color: #45a049;
+}
+
+.chatbot-trigger-button i {
+  font-size: 24px;
+}

@@ -1,0 +1,124 @@
+.admin-header {
+  background-color: #2c3e50;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.admin-header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.admin-logo a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.admin-logo h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.admin-logo span {
+  font-weight: 300;
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+.admin-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.admin-user-info {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.admin-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.admin-username {
+  font-weight: 500;
+}
+
+.admin-actions {
+  display: flex;
+  align-items: center;
+}
+
+.admin-view-site, .admin-logout {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.admin-view-site {
+  text-decoration: none;
+  margin-right: 10px;
+}
+
+.admin-view-site:hover, .admin-logout:hover {
+  color: white;
+}
+
+.admin-view-site i, .admin-logout i {
+  margin-right: 6px;
+}
+
+.admin-mobile-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .admin-mobile-menu-button {
+    display: block;
+    margin-right: 15px;
+  }
+  
+  .admin-header-container {
+    padding: 0 16px;
+  }
+  
+  .admin-actions {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .admin-username {
+    display: none;
+  }
+  
+  .admin-user-info {
+    margin-right: 0;
+  }
+}

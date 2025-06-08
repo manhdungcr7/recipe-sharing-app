@@ -1,0 +1,183 @@
+.draft-detail-page {
+  position: relative;
+}
+
+.draft-banner {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+}
+
+.draft-notice {
+  display: flex;
+  align-items: center;
+  color: #6c757d;
+  font-size: 16px;
+}
+
+.draft-notice i {
+  margin-right: 10px;
+  color: #6c757d;
+}
+
+.draft-actions-top {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.draft-actions-top .btn-edit,
+.draft-actions-top .btn-publish,
+.draft-actions-top .btn-delete,
+.draft-actions-bottom .btn-edit,
+.draft-actions-bottom .btn-publish,
+.draft-actions-bottom .btn-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-decoration: none;
+}
+
+.draft-actions-top .btn-edit,
+.draft-actions-bottom .btn-edit {
+  background-color: #4c9aff;
+  color: white;
+}
+
+.draft-actions-top .btn-publish,
+.draft-actions-bottom .btn-publish {
+  background-color: #36b37e;
+  color: white;
+}
+
+.draft-actions-top .btn-delete,
+.draft-actions-bottom .btn-delete {
+  background-color: #ff5630;
+  color: white;
+}
+
+.draft-actions-top .btn-edit:hover,
+.draft-actions-bottom .btn-edit:hover {
+  background-color: #2684ff;
+}
+
+.draft-actions-top .btn-publish:hover,
+.draft-actions-bottom .btn-publish:hover {
+  background-color: #00875a;
+}
+
+.draft-actions-top .btn-delete:hover,
+.draft-actions-bottom .btn-delete:hover {
+  background-color: #de350b;
+}
+
+.draft-actions-top i,
+.draft-actions-bottom i {
+  margin-right: 8px;
+}
+
+.draft-actions-bottom {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.recipe-validation-issues {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px 20px;
+  margin: 20px 0;
+}
+
+.recipe-validation-issues h3 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #495057;
+}
+
+.recipe-validation-issues ul {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.recipe-validation-issues li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #dc3545;
+}
+
+.recipe-validation-issues li.valid {
+  color: #28a745;
+}
+
+.recipe-validation-issues li i {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.empty-notice {
+  color: #6c757d;
+  font-style: italic;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.error-container, .not-found-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.error-container i, .not-found-container i {
+  font-size: 48px;
+  color: #dc3545;
+  margin-bottom: 20px;
+}
+
+.error-container h2, .not-found-container h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.error-container p, .not-found-container p {
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.error-actions button, .not-found-actions button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.error-actions button i, .not-found-actions button i {
+  font-size: 14px;
+  color: white;
+  margin-right: 8px;
+}
+
+.error-actions button:hover, .not-found-actions button:hover {
+  background-color: #5a6268;
+}

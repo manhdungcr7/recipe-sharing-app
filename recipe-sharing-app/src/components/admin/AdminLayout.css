@@ -1,0 +1,108 @@
+.admin-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.admin-content-container {
+  display: flex;
+  flex: 1;
+}
+
+.admin-main-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Loading state */
+.admin-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.admin-loading .spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #0d6efd;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error styles */
+.admin-error {
+  text-align: center;
+  padding: 40px 0;
+  color: #721c24;
+}
+
+.admin-error i {
+  font-size: 48px;
+  margin-bottom: 15px;
+  color: #dc3545;
+}
+
+.admin-error button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-error button:hover {
+  background-color: #c82333;
+}
+
+.admin-error-message {
+  display: flex;
+  align-items: center;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+}
+
+.admin-error-message i {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.admin-error-message span {
+  flex: 1;
+}
+
+.admin-error-message button {
+  background: none;
+  border: none;
+  color: #721c24;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-content-container {
+    flex-direction: column;
+  }
+
+  .admin-main-content {
+    padding: 16px;
+  }
+}

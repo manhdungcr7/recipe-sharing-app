@@ -1,0 +1,10 @@
+:root {
+    --primary-color: #4CAF50; /* Main color for the application */
+    --secondary-color: #FFC107; /* Secondary color for accents */
+    --background-color: #F5F5F5; /* Background color for the app */
+    --text-color: #333333; /* Default text color */
+    --header-height: 60px; /* Height of the header */
+    --footer-height: 50px; /* Height of the footer */
+    --border-radius: 8px; /* Default border radius for buttons and cards */
+    --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Default box shadow */
+}

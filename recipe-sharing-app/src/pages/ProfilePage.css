@@ -1,0 +1,508 @@
+.profile-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-right: 30px;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-info h1 {
+  margin-bottom: 5px;
+  color: var(--text-color);
+}
+
+.profile-info p {
+  color: var(--text-light);
+  margin-bottom: 15px;
+}
+
+.edit-profile-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.edit-profile-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.profile-stats {
+  display: flex;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+  padding: 0 15px;
+  border-right: 1px solid var(--border-color);
+}
+
+.stat:last-child {
+  border-right: none;
+}
+
+.stat-value {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.stat-label {
+  display: block;
+  color: var(--text-light);
+  margin-top: 5px;
+}
+
+.user-recipes {
+  margin-top: 30px;
+}
+
+.user-recipes h2 {
+  margin-bottom: 20px;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.recipe-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+}
+
+.recipe-image {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.recipe-image img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.recipe-card:hover .recipe-image::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3));
+  border-radius: 8px;
+  z-index: 1;
+}
+
+.recipe-card:hover .recipe-image img {
+  transform: scale(1.05);
+}
+
+.recipe-card h3 {
+  padding: 15px 15px 5px 15px;
+  margin: 0;
+  font-size: 18px;
+}
+
+.recipe-info {
+  padding: 0 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.recipe-status {
+  font-weight: 500;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.recipe-status.published {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.recipe-status.pending_review {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.recipe-status.draft {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.recipe-status.rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.recipe-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 15px;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.recipe-stats i {
+  margin-right: 5px;
+}
+
+.create-recipe-button {
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 15px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.create-recipe-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 18px;
+  color: #6c757d;
+}
+
+.error-message {
+  text-align: center;
+  padding: 20px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.retry-button {
+  padding: 8px 16px;
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.retry-button:hover {
+  background-color: #ff5252;
+}
+
+.debug-info {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.debug-info pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.debug-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.debug-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.debug-button:hover {
+  background-color: #5a6268;
+}
+
+/* Các style hiện có giữ nguyên */
+/* ... */
+
+/* Thêm style mới cho trang profile người khác */
+.other-profile-page .profile-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.other-profile-page .follow-button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.other-profile-page .follow-button.following {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.other-profile-page .follow-button:hover {
+  opacity: 0.9;
+}
+
+.other-profile-page .message-button {
+  padding: 8px 16px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.other-profile-page .message-button:hover {
+  background-color: #0d8bf2;
+}
+
+.other-profile-page .report-button {
+  width: 36px;
+  height: 36px;
+  background-color: transparent;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.other-profile-page .report-button:hover {
+  background-color: #f0f0f0;
+  color: #e53935;
+}
+
+.profile-name-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.admin-badge {
+  background-color: #ff6b6b;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.profile-email {
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.profile-bio {
+  margin-top: 10px;
+  line-height: 1.5;
+  color: #333;
+  max-width: 600px;
+}
+
+.empty-recipes {
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.recipe-link-wrapper {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Loại bỏ trùng lặp thanh tìm kiếm */
+.other-profile-page .search-container {
+  display: none;
+}
+
+/* Đảm bảo không trùng lặp nút hành động */
+.profile-page.other-profile-page {
+  margin-top: 20px;
+}
+
+/* Ẩn các phần tử lặp lại trên trang profile người dùng khác */
+.other-profile-page .header-container,
+.other-profile-page .main-header,
+.other-profile-page .main-footer {
+  display: none !important;
+}
+
+/* Đảm bảo chỉ hiển thị một lần thanh tìm kiếm */
+.main-layout .main-layout .search-bar {
+  display: none !important;
+}
+
+/* Chỉ hiển thị một lần navigation */
+.main-layout .main-layout .header-nav {
+  display: none !important;
+}
+
+/* Chỉ hiển thị một lần header logo */
+.main-layout .main-layout .header-logo {
+  display: none !important;
+}
+
+/* CSS cho modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Make stats clickable */
+.profile-stats .stat {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.profile-stats .stat:hover {
+  background-color: #f5f5f5;
+}
+
+/* Thêm vào ProfilePage.css hoặc Profile.css */
+.stat.clickable {
+  color: #2196f3;
+  text-decoration: underline;
+}
+.stat.clickable:hover {
+  background: #f0f0f0;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .profile-info {
+    margin-top: 20px;
+    margin-left: 0;
+  }
+  
+  .profile-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .stat {
+    margin: 5px 0;
+  }
+}

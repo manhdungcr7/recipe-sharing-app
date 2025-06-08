@@ -1,0 +1,355 @@
+.main-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 64px; /* Chiều cao cố định */
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e0e0e0;
+  transition: none; /* Loại bỏ mọi animation */
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px; /* Padding cố định */
+}
+
+/* Logo */
+.header-logo {
+  flex-shrink: 0; /* Ngăn logo co lại */
+  width: 150px; /* Chiều rộng cố định */
+}
+
+/* Thêm class mới để thay thế header-logo */
+.header-spacer {
+  width: 20px; /* Để giữ khoảng cách, có thể điều chỉnh theo nhu cầu */
+  flex-shrink: 0;
+}
+
+/* Search bar */
+.search-bar {
+  flex-grow: 1;
+  margin: 0 20px;
+  max-width: 500px;
+  position: relative;
+}
+
+.search-bar form {
+  display: flex;
+  align-items: center;
+  height: 40px; /* Tăng chiều cao */
+  position: relative;
+}
+
+.search-bar input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: #f5f5f5;
+  border-radius: 20px; /* Bo tròn các góc */
+  padding: 0 40px 0 16px; /* Thêm padding để nút search không đè lên text */
+  font-size: 15px;
+  transition: box-shadow 0.2s, background-color 0.2s;
+  outline: none;
+}
+
+.search-bar input:focus {
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #4caf50;
+}
+
+.search-bar button {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: 32px;
+  height: 32px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-bar button:hover {
+  background-color: #3d9140;
+}
+
+/* Avatar và thông tin người dùng */
+.user-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  height: 36px; /* Chiều cao cố định */
+}
+
+.avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f0f0f0; /* Màu nền khi chưa tải xong */
+  flex-shrink: 0; /* Ngăn co lại */
+}
+
+/* Fix header-nav có chiều cao cố định */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 100%;
+}
+
+/* Đảm bảo các nút và link có kích thước cố định */
+.header-nav a, 
+.header-nav button, 
+.nav-login, 
+.nav-register,
+.logout-btn {
+  height: 36px;
+  line-height: 36px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-sizing: border-box;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+/* Cải thiện phần user-menu để tránh rung lắc */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px; /* Chiều cao cố định */
+}
+
+/* Cố định kích thước nút đăng xuất */
+.logout-btn {
+  height: 36px;
+  padding: 0 16px;
+  white-space: nowrap;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-shrink: 0; /* Ngăn co lại */
+}
+
+/* Cố định cho tên người dùng */
+.user-menu span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px; /* Giới hạn chiều rộng tên */
+  line-height: 36px; /* Đảm bảo chiều cao phù hợp */
+}
+
+/* Thêm vào CSS của Header */
+
+.avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  font-size: 14px;
+}
+
+/* filepath: c:\Users\Lenovo\Documents\web_SE\recipe-sharing-app\src\pages\ProfilePage.css */
+/* Thêm vào CSS của ProfilePage */
+
+.profile-avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  font-size: 36px;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Làm nổi bật nút "Tạo công thức" */
+.header-nav a[href="/create-recipe"] {
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-nav a[href="/create-recipe"]:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Thêm icon cho nút tạo công thức */
+.header-nav a[href="/create-recipe"]::before {
+  content: "+";
+  margin-right: 6px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Thêm vào CSS đã có */
+
+.search-bar {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+}
+
+.search-bar form {
+    display: flex;
+    width: 100%;
+}
+
+.search-bar input {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.search-bar button {
+    background-color: #ff6b6b;
+    border: none;
+    color: white;
+    padding: 0 15px;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+}
+
+/* Dropdown suggestions */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow: hidden;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.suggestion-header {
+    padding: 10px 15px;
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #eee;
+}
+
+.suggestion-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #666;
+}
+
+.suggestion-list {
+    padding: 8px 0;
+}
+
+.suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+    background-color: #f5f5f5;
+}
+
+.suggestion-item i {
+    margin-right: 10px;
+    color: #999;
+    width: 16px;
+    text-align: center;
+}
+
+.suggestion-text {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-footer {
+    padding: 12px 15px;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #eee;
+}
+
+.suggestion-footer:hover {
+    background-color: #f0f0f0;
+}
+
+.suggestion-footer i {
+    margin-right: 10px;
+    color: #ff6b6b;
+}
+
+.no-suggestions {
+    padding: 15px;
+    text-align: center;
+    color: #888;
+}
+
+/* Thêm CSS cho nút thông báo */
+.notification-link {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #f44336;
+  color: white;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 12px;
+  min-width: 16px;
+  text-align: center;
+}

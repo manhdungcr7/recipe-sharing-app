@@ -1,0 +1,32 @@
+{
+  "name": "recipe-sharing-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Recipe Sharing Community",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:setup": "mysql -u root -p < scripts/db-init.sql"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.9.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-validator": "^7.0.1",
+    "google-auth-library": "^8.7.0",
+    "helmet": "^6.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.14.1",
+    "node-cron": "^4.1.0",
+    "ollama": "^0.5.16",
+    "pdfkit": "^0.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
