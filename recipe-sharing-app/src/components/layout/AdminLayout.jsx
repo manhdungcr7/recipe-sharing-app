@@ -37,11 +37,6 @@ const AdminLayout = ({ children }) => {
     );
   }
 
-  // Nếu không phải admin, chuyển hướng đến trang login
-  if (!isAuthenticated || (currentUser && currentUser.role !== 'admin')) {
-    return <Navigate to="/login" state={{ message: 'Bạn không có quyền truy cập trang này.' }} />;
-  }
-
   return (
     <div className="admin-layout">
       <AdminHeader toggleSidebar={toggleSidebar} />

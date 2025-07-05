@@ -1,194 +1,199 @@
 const { pool } = require('../config/db');
 
-// Create a report - generic handler that works for all report types
-exports.createReport = async (req, res) => {
-  let connection;
-  try {
-    const { type, target_id, reason, description } = req.body;
-    const reporter_id = req.user.id;
-    
-    if (!type || !target_id || !reason) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide all required information: report type, target ID, and reason'
-      });
-    }
-    
-    connection = await pool.getConnection();
-    
-    // Check if the target exists based on report type
-    let targetExists = false;
-    let recipeId = null;
-    
-    if (type === 'recipe') {
-      const [recipes] = await connection.query(
-        'SELECT id FROM recipes WHERE id = ? AND is_deleted = 0',
-        [target_id]
-      );
-      targetExists = recipes.length > 0;
-      recipeId = target_id;
-    } else if (type === 'comment') {
-      const [comments] = await connection.query(
-        'SELECT id, recipe_id FROM comments WHERE id = ?',
-        [target_id]
-      );
-      targetExists = comments.length > 0;
-      recipeId = comments.length > 0 ? comments[0].recipe_id : null;
-    } else if (type === 'user') {
-      const [users] = await connection.query(
-        'SELECT id FROM users WHERE id = ? AND is_blocked = 0',
-        [target_id]
-      );
-      targetExists = users.length > 0;
-    } else {
-      connection.release();
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid report type. Must be "recipe", "comment", or "user"'
-      });
-    }
-    
-    if (!targetExists) {
-      connection.release();
-      return res.status(404).json({
-        success: false,
-        message: 'The reported item does not exist'
-      });
-    }
-    
-    // Insert the new report
-    const [result] = await connection.query(
-      `INSERT INTO reports (type, reported_id, reporter_id, recipe_id, reason, description, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())`,
-      [type, target_id, reporter_id, recipeId, reason, description || null]
-    );
-    
-    connection.release();
-    
-    res.status(201).json({
-      success: true,
-      message: 'Report submitted successfully',
-      data: {
-        id: result.insertId,
-        type,
-        target_id,
-        reporter_id,
-        recipe_id: recipeId,
-        reason,
-        description,
-        status: 'pending'
-      }
-    });
-  } catch (error) {
-    console.error('Error creating report:', error);
-    if (connection) connection.release();
-    
-    res.status(500).json({
-      success: false,
-      message: 'Error creating report',
-      error: error.message
-    });
-  }
-};
-
-// Specific handlers that use the generic createReport function
 exports.reportRecipe = async (req, res) => {
-  req.body.type = 'recipe';
-  req.body.target_id = parseInt(req.params.id);
-  return this.createReport(req, res);
-};
-
-exports.reportComment = async (req, res) => {
-  req.body.type = 'comment';
-  req.body.target_id = parseInt(req.params.id);
-  return this.createReport(req, res);
-};
-
-exports.reportUser = async (req, res) => {
-  req.body.type = 'user';
-  req.body.target_id = parseInt(req.params.id);
-  return this.createReport(req, res);
-};
-
-// Get a report by ID
-exports.getReport = async (req, res) => {
   let connection;
   try {
     const { id } = req.params;
-    const userId = req.user.id;
-    
+    const { reason, details } = req.body;
+    const reporterId = req.user.id;
+
+    if (!id || id === 'undefined') {
+      return res.status(400).json({
+        success: false,
+        message: 'ID công thức không hợp lệ'
+      });
+    }
+
     connection = await pool.getConnection();
-    
-    // Get the report - users can only view their own reports
-    const [reports] = await connection.query(
-      `SELECT r.*, u1.name as reporter_name, u2.name as reported_name
-       FROM reports r
-       INNER JOIN users u1 ON r.reporter_id = u1.id
-       LEFT JOIN users u2 ON (r.type = 'user' AND r.reported_id = u2.id)
-       WHERE r.id = ? AND r.reporter_id = ?`,
-      [id, userId]
+
+    // Kiểm tra công thức tồn tại
+    const [recipes] = await connection.query(
+      'SELECT r.id, r.author_id, r.title, u.name as author_name FROM recipes r JOIN users u ON r.author_id = u.id WHERE r.id = ?',
+      [id]
     );
-    
-    if (reports.length === 0) {
+
+    if (recipes.length === 0) {
       connection.release();
       return res.status(404).json({
         success: false,
-        message: 'Report not found'
+        message: 'Không tìm thấy công thức'
       });
     }
-    
+
+    const recipe = recipes[0];
+
+    // Kiểm tra người dùng không báo cáo công thức của chính mình
+    if (recipe.author_id == reporterId) {
+      connection.release();
+      return res.status(400).json({
+        success: false,
+        message: 'Bạn không thể báo cáo công thức của chính mình'
+      });
+    }
+
+    // Tạo báo cáo mới
+    const [result] = await connection.query(
+      `INSERT INTO reports (reported_id, reporter_id, type, reason, description, status, resource_title, recipe_id, created_at)
+       VALUES (?, ?, 'recipe', ?, ?, 'pending', ?, ?, NOW())`,
+      [id, reporterId, reason, details, recipe.title, id]
+    );
+
     connection.release();
-    
-    res.status(200).json({
+
+    res.status(201).json({
       success: true,
-      data: reports[0]
+      message: 'Báo cáo đã được gửi thành công',
+      reportId: result.insertId
     });
   } catch (error) {
-    console.error('Error getting report:', error);
+    console.error('Error reporting recipe:', error);
     if (connection) connection.release();
-    
+
     res.status(500).json({
       success: false,
-      message: 'Error retrieving report information',
+      message: 'Lỗi khi gửi báo cáo',
       error: error.message
     });
   }
 };
 
-// Get all reports for the current user
-exports.getUserReports = async (req, res) => {
+exports.reportComment = async (req, res) => {
   let connection;
   try {
-    const userId = req.user.id;
-    
+    const { id } = req.params;
+    const { reason, details } = req.body;
+    const reporterId = req.user.id;
+
+    if (!id || id === 'undefined') {
+      return res.status(400).json({
+        success: false,
+        message: 'ID bình luận không hợp lệ'
+      });
+    }
+
     connection = await pool.getConnection();
-    
-    const [reports] = await connection.query(
-      `SELECT r.*, 
-          CASE 
-              WHEN r.type = 'recipe' THEN (SELECT title FROM recipes WHERE id = r.reported_id)
-              WHEN r.type = 'comment' THEN (SELECT text FROM comments WHERE id = r.reported_id)
-              WHEN r.type = 'user' THEN (SELECT name FROM users WHERE id = r.reported_id)
-          END as target_name
-       FROM reports r
-       WHERE r.reporter_id = ?
-       ORDER BY r.created_at DESC`,
-      [userId]
+
+    // Kiểm tra comment tồn tại
+    const [comments] = await connection.query(
+      'SELECT c.id, c.user_id, c.text, c.recipe_id, u.name as user_name, r.title as recipe_title FROM comments c JOIN users u ON c.user_id = u.id JOIN recipes r ON c.recipe_id = r.id WHERE c.id = ?',
+      [id]
     );
-    
+
+    if (comments.length === 0) {
+      connection.release();
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy bình luận'
+      });
+    }
+
+    const comment = comments[0];
+
+    // Kiểm tra không báo cáo comment của chính mình
+    if (comment.user_id == reporterId) {
+      connection.release();
+      return res.status(400).json({
+        success: false,
+        message: 'Bạn không thể báo cáo bình luận của chính mình'
+      });
+    }
+
+    // Tạo báo cáo mới
+    const [result] = await connection.query(
+      `INSERT INTO reports (reported_id, reporter_id, type, reason, description, status, resource_title, recipe_id, created_at)
+       VALUES (?, ?, 'comment', ?, ?, 'pending', ?, ?, NOW())`,
+      [id, reporterId, reason, details, `Bình luận trong "${comment.recipe_title}"`, comment.recipe_id]
+    );
+
     connection.release();
-    
-    res.status(200).json({
+
+    res.status(201).json({
       success: true,
-      data: reports
+      message: 'Báo cáo đã được gửi thành công',
+      reportId: result.insertId
     });
   } catch (error) {
-    console.error('Error getting user reports:', error);
+    console.error('Error reporting comment:', error);
     if (connection) connection.release();
-    
+
     res.status(500).json({
-      success: false, 
-      message: 'Error getting report list',
+      success: false,
+      message: 'Lỗi khi gửi báo cáo',
+      error: error.message
+    });
+  }
+};
+
+exports.reportUser = async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+    const { reason, details } = req.body;
+    const reporterId = req.user.id;
+
+    if (!id || id === 'undefined') {
+      return res.status(400).json({
+        success: false,
+        message: 'ID người dùng không hợp lệ'
+      });
+    }
+
+    if (reporterId == id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bạn không thể báo cáo chính mình'
+      });
+    }
+
+    connection = await pool.getConnection();
+
+    // Kiểm tra người dùng tồn tại
+    const [users] = await connection.query(
+      'SELECT id, name FROM users WHERE id = ?',
+      [id]
+    );
+
+    if (users.length === 0) {
+      connection.release();
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    const user = users[0];
+
+    // Tạo báo cáo mới
+    const [result] = await connection.query(
+      `INSERT INTO reports (reported_id, reporter_id, type, reason, description, status, resource_title, created_at)
+       VALUES (?, ?, 'user', ?, ?, 'pending', ?, NOW())`,
+      [id, reporterId, reason, details, user.name]
+    );
+
+    connection.release();
+
+    res.status(201).json({
+      success: true,
+      message: 'Báo cáo đã được gửi thành công',
+      reportId: result.insertId
+    });
+  } catch (error) {
+    console.error('Error reporting user:', error);
+    if (connection) connection.release();
+
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi gửi báo cáo',
       error: error.message
     });
   }

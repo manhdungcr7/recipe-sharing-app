@@ -2,6 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { validationResult } = require('express-validator');
+const connection = require('../config/db'); // Import the database connection
 
 // Register a new user
 exports.register = async (req, res) => {
@@ -48,8 +49,58 @@ exports.login = async (req, res) => {
 // Get current user
 exports.getCurrentUser = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        res.json(user);
+        // Đảm bảo trả về đúng trường picture từ database
+        const [user] = await connection.query(
+            'SELECT id, name, email, role, picture FROM users WHERE id = ?',
+            [req.user.id]
+        );
+        // Trả về user[0].picture (không tự động lấy lại ảnh Google)
+        res.json(user[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// When returning user:
+exports.getUserByEmail = async (req, res) => {
+    const { email } = req.params;
+
+    try {
+        const [existingUsers] = await connection.query(
+            'SELECT * FROM users WHERE email = ?',
+            [email]
+        );
+        const user = existingUsers[0];
+
+        // Đảm bảo lấy đúng trường picture từ database
+        const userData = {
+            id: user.id,
+            name: user.name || name,
+            email: user.email || email,
+            // ƯU TIÊN ảnh đã upload nếu có, nếu không thì mới lấy ảnh Google
+            picture: user.picture || picture,
+            role: user.role || 'user',
+            is_verified: 1
+        };
+
+        res.json(userData);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Update Google ID and picture for the user
+exports.updateGoogleIdAndPicture = async (req, res) => {
+    const { sub, picture } = req.body;
+
+    try {
+        // Update the user's Google ID and picture only if the picture is not already set
+        await connection.query(
+            'UPDATE users SET google_id = ?, picture = ? WHERE id = ? AND (picture IS NULL OR picture = "")',
+            [sub, picture, user.id]
+        );
+
+        res.json({ message: 'User profile updated successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }

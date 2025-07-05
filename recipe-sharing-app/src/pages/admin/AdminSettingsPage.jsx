@@ -238,18 +238,6 @@ const AdminSettingsPage = () => {
               required
             />
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="featuredCategories">Danh mục nổi bật (ngăn cách bằng dấu phẩy)</label>
-            <input
-              type="text"
-              id="featuredCategories"
-              name="featuredCategories"
-              value={settings.featuredCategories}
-              onChange={handleChange}
-              placeholder="VD: Món Việt, Đồ ngọt, Món chay"
-            />
-          </div>
         </div>
         
         <div className="settings-section">

@@ -158,8 +158,20 @@ const EditRecipePage = () => {
     setSteps(newSteps);
   };
 
-  // Xử lý thay đổi hình ảnh bước
+  // Xử lý thay đổi hình ảnh bước - sửa lại như sau
   const handleStepImageChange = (e, index) => {
+    // Đảm bảo index là số hợp lệ
+    if (index === undefined || index < 0 || index >= steps.length) {
+      console.error("Invalid step index:", index);
+      return;
+    }
+    
+    // Kiểm tra e và e.target trước khi truy cập e.target.files
+    if (!e || !e.target || !e.target.files) {
+      console.error("Invalid event object in handleStepImageChange", e);
+      return;
+    }
+    
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -493,13 +505,13 @@ const EditRecipePage = () => {
                     ) : (
                       <div className="image-upload">
                         <label htmlFor={`step-image-${index}`} className="upload-label">
-                          <i className="fas fa-image"></i>
-                          <span>Thêm hình ảnh cho bước này</span>
+                          <i className="fas fa-upload"></i> Thêm ảnh
                         </label>
                         <input
                           type="file"
                           id={`step-image-${index}`}
                           accept="image/*"
+                          style={{ display: 'none' }}
                           onChange={(e) => handleStepImageChange(e, index)}
                         />
                       </div>

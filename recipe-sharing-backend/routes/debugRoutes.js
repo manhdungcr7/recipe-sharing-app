@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { pool } = require('../config/db');
-const { protect } = require('../middleware/auth');
+const { protect, admin } = require('../middleware/auth');
 const router = express.Router();
 
 // Endpoint để kiểm tra và debug hình ảnh
@@ -289,6 +289,38 @@ router.get('/route-test/:route(*)', (req, res) => {
     matchedRoutes: matchedRoutes.filter(r => r.matched),
     allRoutes: matchedRoutes
   });
+});
+
+// Route để lấy tin nhắn admin
+router.get('/raw-admin-messages', admin, async (req, res) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    
+    const [messages] = await connection.query(`
+      SELECT n.*, u.name as sender_name, u.picture as sender_picture
+      FROM notifications n
+      LEFT JOIN users u ON n.sender_id = u.id
+      WHERE n.type = 'admin_message'
+      ORDER BY n.created_at DESC
+    `);
+    
+    connection.release();
+    
+    res.status(200).json({
+      success: true,
+      data: messages
+    });
+  } catch (error) {
+    console.error('Error fetching raw admin messages:', error);
+    if (connection) connection.release();
+    
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy tin nhắn',
+      error: error.message
+    });
+  }
 });
 
 module.exports = router;

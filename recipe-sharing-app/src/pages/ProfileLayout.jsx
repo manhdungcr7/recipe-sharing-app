@@ -7,6 +7,7 @@ const ProfileLayout = ({
   user,
   stats,
   setStats,
+  isOwner,
   isFollowing,
   onFollowToggle,
   onEditProfile,
@@ -19,7 +20,13 @@ const ProfileLayout = ({
       <div className="profile-header">
         <img
           className="profile-avatar"
-          src={user.picture?.startsWith('http') ? user.picture : `http://localhost:5000/${user.picture}`}
+          src={
+            user.picture
+              ? user.picture.startsWith('http')
+                ? user.picture
+                : `http://localhost:5000${user.picture.startsWith('/') ? user.picture : '/' + user.picture}`
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`
+          }
           alt={user.name}
         />
         <div className="profile-info">
@@ -29,7 +36,7 @@ const ProfileLayout = ({
           <button className="follow-button" onClick={onFollowToggle}>
             {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
           </button>
-          {user.isOwner && (
+          {isOwner && (
             <button className="edit-profile-btn" onClick={onEditProfile}>
               Chỉnh sửa
             </button>
@@ -60,8 +67,8 @@ const ProfileLayout = ({
       {/* Tabs */}
       <div className="profile-tabs">
         <button>Bài đăng đã đăng</button>
-        {user.isOwner && <button>Bản nháp</button>}
-        {user.isOwner && <button>Đã lưu</button>}
+        {isOwner && <button>Bản nháp</button>}
+        {isOwner && <button>Đã lưu</button>}
       </div>
       {/* Danh sách công thức */}
       <UserPosts userId={user.id} />

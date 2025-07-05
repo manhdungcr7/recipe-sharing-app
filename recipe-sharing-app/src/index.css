@@ -422,3 +422,294 @@ img.avatar-small {
   min-height: unset;
   padding: 0;
 }
+
+/* Thêm vào cuối file để override các style khác */
+
+/* Override styles để đảm bảo khoảng cách nhất quán */
+.header-container > * {
+  margin: 0 5px; /* Minimum margin giữa các phần tử */
+}
+
+/* Đảm bảo logo nhất quán giữa các trang */
+.header-logo h1 {
+  color: rgb(76, 175, 80) !important; /* Force color consistency */
+}
+
+/* Đảm bảo khoảng cách giữa các action button */
+
+/* Ngăn chặn các items bị co lại quá nhỏ */
+.header-left, .search-container{
+  flex-shrink: 0;
+  min-width: auto;
+}
+
+/* Đảm bảo kích thước ảnh mặc định */
+.recipe-image, .recipe-card-image {
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  background-color: #f0f0f0;
+}
+
+.avatar-small, .user-avatar, .profile-avatar {
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  background-color: #f0f0f0;
+}
+
+/* Thêm các hiệu ứng và chuyển đổi mềm mại */
+
+/* Các hiệu ứng chuyển đổi mượt mà */
+* {
+  transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+}
+
+a, button {
+  transition: all 0.3s ease;
+}
+
+/* Hiệu ứng hover trên card */
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Style cho button */
+.btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Hiệu ứng pulse cho avatar */
+.avatar-small:hover, .profile-avatar:hover {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(66, 153, 225, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(66, 153, 225, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(66, 153, 225, 0);
+  }
+}
+
+/* Scrollbar tùy chỉnh */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Cải thiện hiển thị cho phần body */
+body {
+  color: #4a5568;
+  line-height: 1.6;
+  background-color: #f8fafc;
+}
+
+/* Cải thiện chuyển trang */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+/* Ngăn chặn hiển thị trùng lặp header */
+.main-layout .main-layout .header-container,
+.dashboard-page .header-container + .header-container,
+.header-container + .header-container {
+  display: none !important; /* Ẩn header thứ hai */
+}
+
+/* Thêm vào cuối file index.css để đảm bảo nó ghi đè các style khác */
+
+/* Fix vấn đề header bị đè lên nhau */
+body > div:first-child {
+  overflow-x: hidden;
+}
+
+/* Ẩn các header trùng lặp */
+.main-layout .main-layout .header-container,
+.main-layout > .header-container + .header-container,
+.header-container ~ .header-container {
+  display: none !important;
+}
+
+/* Đảm bảo chỉ hiển thị một header */
+.main-header:not(:first-of-type) {
+  display: none !important;
+}
+
+/* Cấu trúc main layout đúng */
+.main-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-layout > header:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.main-layout > .main-content {
+  min-height: calc(100vh - 64px);
+  padding-top: 10px;
+}
+
+/* Đảm bảo tất cả avatar hiển thị đúng */
+.avatar-small, .user-avatar, .profile-avatar {
+  aspect-ratio: 1/1;
+  object-fit: cover !important;
+  object-position: center !important;
+  background-color: #f0f0f0;
+}
+
+.profile-avatar img, .user-avatar img, .avatar-small img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Đảm bảo hiển thị đúng khi hover */
+.profile-avatar-container:hover .profile-avatar,
+.profile-avatar-container:hover .profile-avatar-placeholder {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* Xử lý các trường hợp đặc biệt */
+.fallback-avatar {
+  object-position: center !important;
+  object-fit: contain !important;
+  padding: 5px;
+  background-color: white;
+}
+
+/* Đảm bảo không có khoảng trống thừa */
+.profile-avatar-container * {
+  margin: 0;
+  padding: 0;
+}
+
+/* Sửa lỗi menu avatar options hiển thị không đúng */
+.avatar-options {
+  position: absolute !important;
+  top: 110% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background-color: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  width: 180px !important;
+  z-index: 9999999 !important; /* Z-index cực cao để đảm bảo hiển thị trên tất cả */
+  overflow: visible !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  height: auto !important;
+}
+
+/* Đảm bảo menu avatar options luôn hiển thị trên cùng */
+body .avatar-options {
+  position: absolute !important;
+  z-index: 100000 !important;
+  top: 110% !important;
+}
+
+/* Đảm bảo container có position relative */
+body .profile-avatar-wrapper {
+  position: relative !important;
+  z-index: 100000 !important;
+}
+
+/* Hiển thị các nút trong menu */
+.avatar-options button {
+  width: 100% !important;
+  padding: 12px 16px !important;
+  text-align: left !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: block !important;
+  align-items: center !important;
+  gap: 10px !important;
+  transition: background-color 0.2s !important;
+  font-size: 14px !important;
+  color: #333 !important;
+  margin: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Đường ngăn cách giữa các nút */
+.avatar-options button:first-child {
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+/* Đảm bảo menu nằm trên cùng */
+.profile-avatar-wrapper {
+  position: relative !important;
+  z-index: 999999 !important;
+}
+
+/* Đảm bảo menu avatar có thể nhận được sự kiện click */
+.avatar-options-portal, 
+.avatar-options-portal * {
+  pointer-events: auto !important;
+}
+
+/* Tắt các hiệu ứng transition có thể gây lỗi */
+.avatar-options-portal button {
+  transition: background-color 0.2s !important;
+}
+
+/* Tạo hiệu ứng hover để người dùng biết có thể click */
+.avatar-options-portal button:hover {
+  background-color: #f5f5f5 !important;
+}

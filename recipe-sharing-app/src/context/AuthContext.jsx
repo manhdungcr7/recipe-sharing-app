@@ -6,37 +6,84 @@ export const AuthContext = createContext();
 // Create the provider component
 export const AuthProvider = ({ children }) => {
   // Define state variables for authentication
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (err) {
+      console.error('Error parsing user data:', err);
+      return null;
+    }
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Lấy giá trị auth_token
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    // Lấy giá trị user
+    const userStr = localStorage.getItem('user');
+    // Chỉ coi là đã đăng nhập khi CẢ HAI đều tồn tại
+    return !!(token && userStr);
+  });
   const [loading, setLoading] = useState(true);
 
   // Check if user is logged in on component mount
   useEffect(() => {
     const checkLoggedIn = async () => {
       try {
-        // Use consistent token key - 'token' instead of 'auth_token'
-        const token = localStorage.getItem('token');
-        if (token) {
-          // Fetch user data from API
-          const response = await fetch('http://localhost:5000/api/auth/me', {
-            headers: {
-              Authorization: `Bearer ${token}`
+        // Kiểm tra token trong localStorage
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        if (!token) {
+          setLoading(false);
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+          return;
+        }
+        
+        // QUAN TRỌNG: Lấy thông tin người dùng từ localStorage trước
+        let storedUserData = null;
+        try {
+          const storedUserString = localStorage.getItem('user');
+          if (storedUserString) {
+            storedUserData = JSON.parse(storedUserString);
+          }
+        } catch (error) {
+          console.error("Error parsing stored user:", error);
+        }
+        
+        // Gọi API kiểm tra token
+        const response = await fetch('http://localhost:5000/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            // QUAN TRỌNG: So sánh và giữ lại tên người dùng đã chỉnh sửa
+            if (storedUserData && storedUserData.id === data.data.id && storedUserData.name !== data.data.name) {
+              console.log("Restoring custom name after auth check");
+              data.data.name = storedUserData.name;
             }
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            setCurrentUser(userData.data);
+            
+            localStorage.setItem('user', JSON.stringify(data.data));
+            setCurrentUser(data.data);
             setIsAuthenticated(true);
           } else {
-            // If token is invalid, clear it
+            // Không có dữ liệu hoặc không thành công
+            localStorage.removeItem('auth_token');
             localStorage.removeItem('token');
-            setIsAuthenticated(false);
+            localStorage.removeItem('user');
             setCurrentUser(null);
+            setIsAuthenticated(false);
           }
+        } else {
+          // Response không OK
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setCurrentUser(null);
+          setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error("Error checking auth status:", error);
       } finally {
         setLoading(false);
       }
@@ -45,17 +92,72 @@ export const AuthProvider = ({ children }) => {
     checkLoggedIn();
   }, []);
 
+  // Verify authentication with backend
+  useEffect(() => {
+    const verifyAuth = async () => {
+      try {
+        if (!isAuthenticated) return; // Không cần kiểm tra nếu chưa đăng nhập
+        
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        if (!token) return;
+
+        // Gọi API xác thực
+        const response = await fetch('http://localhost:5000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          // Token không hợp lệ, đăng xuất
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        } else {
+          // Token hợp lệ, cập nhật user data nếu cần
+          const data = await response.json();
+          if (data.success && data.data) {
+            setCurrentUser(data.data);
+            localStorage.setItem('user', JSON.stringify(data.data));
+          }
+        }
+      } catch (err) {
+        console.error('Error verifying auth:', err);
+      }
+    };
+
+    verifyAuth();
+  }, [isAuthenticated]);
+
   // Login function
-  const login = async (token, userData) => {
-    // Save token with the consistent key
-    localStorage.setItem('token', token);
-    
-    if (userData) {
+  const login = (userData, token) => {
+    try {
+      // Lưu token vào localStorage
+      localStorage.setItem('auth_token', token);
+      
+      // QUAN TRỌNG: Kiểm tra xem đã có thông tin người dùng trong localStorage chưa
+      const existingUserString = localStorage.getItem('user');
+      if (existingUserString) {
+        try {
+          const existingUser = JSON.parse(existingUserString);
+          
+          // Nếu cùng một người dùng và tên đã được chỉnh sửa, giữ lại tên đã chỉnh sửa
+          if (existingUser && existingUser.id === userData.id && existingUser.name) {
+            console.log("Preserving custom name:", existingUser.name);
+            userData = {...userData, name: existingUser.name};
+          }
+        } catch (error) {
+          console.error("Error parsing localStorage user:", error);
+        }
+      }
+      
+      // Cập nhật localStorage và state với thông tin đã kết hợp
       localStorage.setItem('user', JSON.stringify(userData));
+      setCurrentUser(userData);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Login error:", error);
     }
-    
-    setCurrentUser(userData);
-    setIsAuthenticated(true);
   };
 
   // Logout function
@@ -84,7 +186,6 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       
       // Save token with the consistent key
-      localStorage.setItem('token', data.token);
       
       // Update state
       setCurrentUser(data.user);
@@ -107,16 +208,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Thêm vào các hàm được export
+  const clearAuth = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+  };
+
   return (
     <AuthContext.Provider 
       value={{ 
         currentUser, 
+        setCurrentUser, 
         isAuthenticated, 
-        loading,
         login, 
-        logout, 
-        loginWithGoogle,
-        updateAvatar
+        logout,
+        clearAuth, // Thêm clearAuth vào đây
+        loading
       }}
     >
       {children}

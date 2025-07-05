@@ -2,6 +2,7 @@ const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 const config = require('../config/config');
+const bcrypt = require('bcryptjs');
 
 // Tăng clockTolerance lên một giá trị lớn hơn để xử lý sự chênh lệch thời gian của server
 const client = new OAuth2Client({
@@ -58,10 +59,19 @@ exports.googleLogin = async (req, res) => {
       const user = existingUsers[0];
       
       // Cập nhật thông tin mới nhất nếu cần
-      await connection.query(
-        'UPDATE users SET google_id = ?, picture = ? WHERE id = ?',
-        [sub, picture, user.id]
-      );
+      if (user.picture && !user.picture.includes('googleusercontent.com')) {
+        // Không cập nhật picture, chỉ cập nhật các thông tin khác
+        await connection.query(
+          'UPDATE users SET name = ? WHERE id = ?',
+          [name, user.id]
+        );
+      } else {
+        // Nếu chưa có picture hoặc đang dùng ảnh Google thì mới cập nhật
+        await connection.query(
+          'UPDATE users SET name = ?, picture = ? WHERE id = ?',
+          [name, picture, user.id]
+        );
+      }
       
       const token = generateToken(user.id);
       
@@ -131,4 +141,103 @@ exports.logout = (req, res) => {
     success: true,
     message: 'Đã đăng xuất thành công'
   });
+};
+
+// Hàm lấy thông tin user hiện tại (me)
+exports.me = async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    const [users] = await connection.query(
+      'SELECT id, name, email, role, picture FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: users[0]
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi hệ thống: ' + error.message
+    });
+  }
+};
+
+// @desc    Login as Admin
+// @route   POST /api/auth/admin
+// @access  Public
+exports.adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+  
+  try {
+    const connection = await pool.getConnection();
+    
+    // Kiểm tra user tồn tại không
+    const [users] = await connection.query(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+    
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Thông tin đăng nhập không chính xác'
+      });
+    }
+    
+    const user = users[0];
+    
+    // So sánh password (giả sử password được mã hóa bằng bcrypt)
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Thông tin đăng nhập không chính xác'
+      });
+    }
+    
+    // Kiểm tra role
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Không có quyền truy cập'
+      });
+    }
+    
+    const token = generateToken(user.id);
+    
+    // Dữ liệu người dùng (không bao gồm password)
+    const { password: _, ...userData } = user;
+    
+    connection.release();
+    
+    return res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        // ...các trường khác nếu cần
+      },
+      message: 'Đăng nhập admin thành công'
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi đăng nhập admin: ' + error.message
+    });
+  }
 };

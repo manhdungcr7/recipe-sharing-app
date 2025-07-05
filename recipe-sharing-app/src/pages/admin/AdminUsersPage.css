@@ -1,0 +1,184 @@
+/* Thêm vào file CSS của AdminUsersPage hoặc style trong component */
+
+/* Thêm style cho nút khóa tài khoản */
+.btn-lock {
+  background-color: #f1c40f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 13px;
+}
+
+.btn-lock.active {
+  background-color: #e74c3c;
+}
+
+.btn-lock.active:hover {
+  background-color: #27ae60;
+}
+
+.btn-lock.active i {
+  color: white;
+}
+
+.btn-lock.active:hover i:before {
+  content: "\f09c"; /* Mã unicode của icon fa-unlock */
+}
+
+.btn-lock:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Style cho nút xóa tài khoản */
+.btn-delete {
+  background-color: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 13px;
+}
+
+/* Highlight cho hàng có tài khoản bị khóa */
+tr.blocked-user {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Icon hiển thị tài khoản bị khóa */
+.blocked-icon {
+  margin-left: 8px;
+  color: #e74c3c;
+}
+
+/* Thêm icon margin */
+.btn-lock i, .btn-delete i {
+  margin-right: 4px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: white;
+  border-radius: 8px;
+  padding: 0;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: modal-appear 0.3s ease-out;
+}
+
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Thêm vào cuối file */
+
+/* Style cho nút gửi thông báo */
+.btn-notify {
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-notify:hover {
+  background-color: #2980b9;
+}
+
+/* Style cho modal thông báo */
+.modal-footer .btn-send {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-footer .btn-send:hover {
+  background-color: #2980b9;
+}
+
+/* Style cho select loại thông báo */
+.modal-body select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin-bottom: 15px;
+}

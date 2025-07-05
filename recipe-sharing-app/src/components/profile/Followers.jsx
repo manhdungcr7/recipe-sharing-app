@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Followers = ({
   followers: propFollowers,
@@ -10,6 +10,7 @@ const Followers = ({
 }) => {
   const [followers, setFollowers] = useState(propFollowers || []);
   const [loading, setLoading] = useState(propLoading || false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Nếu có prop followers thì không cần fetch
@@ -32,7 +33,7 @@ const Followers = ({
   }, [userId, propFollowers]);
 
   return (
-    <div>
+    <div className="followers-container">
       <h3>Người theo dõi</h3>
       <ul className="user-list">
         {loading ? (
@@ -45,7 +46,11 @@ const Followers = ({
               <Link
                 to={`/profile/${user.id}`}
                 className="user-link"
-                onClick={onClose}
+                onClick={e => {
+                  e.preventDefault();
+                  onClose();
+                  navigate(`/profile/${user.id}`);
+                }}
               >
                 <img
                   src={

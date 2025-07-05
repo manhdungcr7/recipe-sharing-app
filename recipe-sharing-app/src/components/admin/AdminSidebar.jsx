@@ -1,44 +1,75 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import './AdminSidebar.css';
 
-const AdminSidebar = () => {
-  // Danh sách các menu item
-  const menuItems = [
-    { path: '/admin', label: 'Tổng quan', icon: 'fa-tachometer-alt' },
-    { path: '/admin/users', label: 'Người dùng', icon: 'fa-users' },
-    { path: '/admin/recipes', label: 'Công thức', icon: 'fa-utensils' },
-    { path: '/admin/categories', label: 'Danh mục', icon: 'fa-list' },
-    { path: '/admin/reports', label: 'Báo cáo', icon: 'fa-flag' },
-    { path: '/admin/settings', label: 'Cài đặt', icon: 'fa-cog' },
-  ];
+const AdminSidebar = ({ className, isExpanded }) => {
+  console.log("AdminSidebar - isExpanded:", isExpanded); // Log để debug
+  const location = useLocation();
 
   return (
-    <aside className="admin-sidebar">
-      <div className="admin-sidebar-content">
-        <nav className="admin-nav">
-          <ul>
-            {menuItems.map((item, index) => (
-              <li key={index}>
-                <NavLink 
-                  to={item.path}
-                  className={({ isActive }) => isActive ? 'active' : ''}
-                  end={item.path === '/admin'}
-                >
-                  <i className={`fas ${item.icon}`}></i>
-                  <span>{item.label}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        
-        <div className="admin-sidebar-footer">
-          <p>© {new Date().getFullYear()} Recipe Sharing</p>
-          <p>Phiên bản 1.0.0</p>
-        </div>
-      </div>
-    </aside>
+    <div className={`admin-sidebar ${className || ''} ${isExpanded ? 'show' : 'hide'}`}>
+      <nav className="sidebar-nav">
+        <ul className="menu-list">
+          <li className="menu-section">Dashboard</li>
+          <li className="menu-item">
+            <NavLink to="/admin/dashboard" className={({isActive}) => isActive ? "menu-link active" : "menu-link"}>
+              <span className="menu-icon">
+                <i className="fas fa-tachometer-alt"></i>
+              </span>
+              <span className="menu-text">Tổng quan</span>
+            </NavLink>
+          </li>
+          
+          <li className="menu-section">Quản lý</li>
+          <li className="menu-item">
+            <NavLink to="/admin/users" className={({isActive}) => isActive ? "menu-link active" : "menu-link"}>
+              <span className="menu-icon">
+                <i className="fas fa-users"></i>
+              </span>
+              <span className="menu-text">Người dùng</span>
+            </NavLink>
+          </li>
+          
+          <li className="menu-item">
+            <NavLink to="/admin/recipes" className={({isActive}) => isActive ? "menu-link active" : "menu-link"}>
+              <span className="menu-icon">
+                <i className="fas fa-utensils"></i>
+              </span>
+              <span className="menu-text">Công thức</span>
+            </NavLink>
+          </li>
+          
+          <li className="menu-item">
+            <NavLink to="/admin/reports" className={({isActive}) => isActive ? "menu-link active" : "menu-link"}>
+              <span className="menu-icon">
+                <i className="fas fa-flag"></i>
+              </span>
+              <span className="menu-text">Báo cáo</span>
+            </NavLink>
+          </li>
+          
+          <li className="menu-section">Giao tiếp</li>
+          <li className="menu-item">
+            <NavLink to="/admin/messages" className={({isActive}) => isActive ? "menu-link active" : "menu-link"}>
+              <span className="menu-icon">
+                <i className="fas fa-envelope"></i>
+              </span>
+              <span className="menu-text">Tin nhắn</span>
+            </NavLink>
+          </li>
+          
+          <li className="menu-section">Hệ thống</li>
+          <li className="menu-item">
+            <NavLink to="/admin/settings" className={({isActive}) => isActive ? "menu-link active" : "menu-link"}>
+              <span className="menu-icon">
+                <i className="fas fa-cog"></i>
+              </span>
+              <span className="menu-text">Cài đặt</span>
+            </NavLink>
+          </li>
+        </ul>
+      </nav>
+    </div>
   );
 };
 

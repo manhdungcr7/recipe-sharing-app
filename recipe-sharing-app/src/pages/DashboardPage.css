@@ -1,0 +1,956 @@
+/* Đảm bảo file này được import trong DashboardPage.jsx */
+
+/* Cập nhật CSS cho Dashboard */
+
+/* Instagram-inspired Dashboard Style */
+
+/* Global Container */
+.dashboard-container {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Hero Section with Profile Info - Thêm gradient nền */
+.dashboard-hero {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #ffffff, #f0f7ff);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 40px 30px;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dashboard-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(66, 153, 225, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+/* Profile Container - Cải thiện bố cục */
+.profile-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Avatar Style - Thêm hiệu ứng và hover */
+.profile-avatar-wrapper {
+  position: relative;
+  margin-right: 40px;
+  transition: transform 0.3s ease;
+}
+
+.profile-avatar-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(45deg, #3498db, #8e44ad);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-container:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.profile-avatar {
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  background-color: white;
+  border: 2px solid white;
+  box-sizing: border-box;
+}
+
+/* Cập nhật kiểu cho placeholder khi không có avatar */
+.profile-avatar-placeholder {
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  border-radius: 50%;
+  background: linear-gradient(45deg, #34ace0, #4a69bd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: white;
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+/* Profile info - Cải thiện typography */
+.profile-info {
+  flex: 1;
+}
+
+.profile-info h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: #2d3748;
+  letter-spacing: -0.5px;
+}
+
+.profile-info p {
+  font-size: 1rem;
+  color: #718096;
+  letter-spacing: 0.2px;
+}
+
+/* Edit name form - Cải thiện form chỉnh sửa tên */
+.edit-name-form {
+  display: flex;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.edit-name-form input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.edit-name-form input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+}
+
+.edit-name-form button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #4299e1;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-name-form button[type="button"] {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.edit-name-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+}
+
+.edit-name-form button[type="button"]:hover {
+  background-color: #cbd5e0;
+}
+
+/* Stats container - Thêm gradient và hover effects */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-item {
+  background: linear-gradient(135deg, #ffffff, #f7fafc);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #f7fafc, #ebf8ff);
+}
+
+.stat-item h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: #2c5282;
+}
+
+.stat-item p {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.stat-item i {
+  font-size: 1.8rem;
+  color: #4299e1;
+  margin-top: 10px;
+  opacity: 0.9;
+}
+
+/* Dashboard tabs navigation - Cải thiện tab navigation */
+.dashboard-tabs {
+  display: flex;
+  background-color: white;
+  border-radius: 12px;
+  padding: 5px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 70px;
+  z-index: 10;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 16px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #718096;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.tab-button i {
+  font-size: 1.2rem;
+}
+
+.tab-button.active {
+  color: #3182ce;
+  background-color: #ebf8ff;
+}
+
+.tab-button:hover:not(.active) {
+  background-color: #f7fafc;
+  color: #4a5568;
+}
+
+/* Recipe cards - Cải thiện recipe cards */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.recipe-card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  border: 1px solid #f0f0f0;
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-image-container {
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+}
+
+.recipe-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.recipe-card:hover .recipe-image-container img {
+  transform: scale(1.05);
+}
+
+.recipe-info {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-info h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #2d3748;
+  line-height: 1.4;
+}
+
+.recipe-info p {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-bottom: 15px;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.recipe-meta, .recipe-author {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  font-size: 0.85rem;
+  color: #a0aec0;
+}
+
+.recipe-meta .status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.recipe-meta .status.draft {
+  background-color: #feebc8;
+  color: #c05621;
+}
+
+.recipe-meta .date {
+  color: #a0aec0;
+}
+
+/* Empty state styling - Cải thiện empty states */
+.empty-state {
+  text-align: center;
+  padding: 60px 30px;
+  background: linear-gradient(135deg, #ffffff, #f7fafc);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  color: #a0aec0;
+  margin-bottom: 20px;
+}
+
+.empty-state h4 {
+  font-size: 1.5rem;
+  color: #4a5568;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: #718096;
+  margin-bottom: 25px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.empty-state .btn, .empty-state a.btn {
+  background-color: #4299e1;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.empty-state .btn:hover {
+  background-color: #3182ce;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.25);
+}
+
+/* Avatar upload options - Cải thiện CSS cho upload avatar */
+.avatar-options {
+  position: absolute !important;
+  top: 110% !important;
+  left: 0 !important; /* Thay vì 50% và transform */
+  background-color: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  width: 180px !important;
+  /* z-index rất cao */
+  z-index: 99999999 !important;
+  overflow: visible !important;
+}
+
+/* Hiển thị các nút trong menu */
+.avatar-options button {
+  width: 100% !important;
+  padding: 12px 16px !important;
+  text-align: left !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: block !important;
+  align-items: center !important;
+  gap: 10px !important;
+  transition: background-color 0.2s !important;
+  font-size: 14px !important;
+  color: #333 !important;
+  margin: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Đường ngăn cách giữa các nút */
+.avatar-options button:first-child {
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+/* Đảm bảo menu nằm trên cùng */
+.profile-avatar-wrapper {
+  position: relative !important;
+  z-index: 99999999 !important; /* Chắc chắn có z-index cao để menu con hiển thị đúng */
+}
+
+/* Cải thiện modal người theo dõi/đang theo dõi */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 5px;
+  transition: color 0.2s;
+}
+
+.close-modal:hover {
+  color: #4a5568;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(80vh - 130px);
+}
+
+/* CSS cho modal xem avatar */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+}
+
+.avatar-modal {
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.avatar-large {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 8px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+}
+
+.modal-close-button {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  background: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: #4caf50;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Danh sách người theo dõi */
+.followers-list,
+.following-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.follower-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.follower-item:last-child {
+  border-bottom: none;
+}
+
+.follower-profile {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.follower-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.follower-info h4 {
+  font-size: 1rem;
+  margin: 0;
+  color: #2d3748;
+}
+
+.follow-button {
+  background-color: #4299e1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.follow-button:hover {
+  background-color: #3182ce;
+  transform: translateY(-2px);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .dashboard-hero {
+    padding: 30px 20px;
+  }
+  
+  .profile-container {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .profile-avatar-wrapper {
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+  
+  .stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dashboard-tabs {
+    overflow-x: auto;
+    padding: 5px;
+    position: relative;
+    top: 0;
+  }
+  
+  .tab-button {
+    padding: 12px;
+    min-width: 100px;
+  }
+  
+  .recipes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .tab-button {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+  
+  .tab-button i {
+    font-size: 1rem;
+  }
+  
+  .recipes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .edit-name-form {
+    flex-direction: column;
+  }
+  
+  .edit-name-form button {
+    width: 100%;
+    margin-top: 5px;
+  }
+}
+
+/* Thêm vào cuối file */
+
+/* CSS riêng cho trang user profile */
+.user-profile-page .profile-action-buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Style cho nút theo dõi */
+.user-profile-page .follow-button {
+  background-color: #4299e1;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  transition: all 0.2s;
+}
+
+.user-profile-page .follow-button.following {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.user-profile-page .follow-button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Style cho nút báo cáo */
+.user-profile-page .report-button {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #dc3545;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-profile-page .report-button:hover {
+  background-color: #f1f3f5;
+}
+
+/* Thêm vào file DashboardPage.css */
+.error-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.error-message {
+  color: #e53e3e;
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.btn-primary {
+  background-color: #4299e1;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #3182ce;
+  transform: translateY(-2px);
+}
+
+/* Styles for Trash page */
+.trash-container {
+  margin-top: 20px;
+}
+
+.trash-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.trash-header h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.trash-info {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.empty-trash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.empty-trash-icon {
+  font-size: 3rem;
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+.empty-trash p {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.empty-trash span {
+  color: #999;
+}
+
+.trash-recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.trash-recipe-card {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: white;
+  position: relative;
+}
+
+.trash-recipe-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.trash-recipe-image {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+
+.trash-recipe-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.trash-recipe-card:hover .trash-recipe-image img {
+  transform: scale(1.05);
+}
+
+.deletion-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 59, 48, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.trash-recipe-content {
+  padding: 15px;
+}
+
+.trash-recipe-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trash-recipe-meta {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.trash-delete-date {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.trash-recipe-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.restore-button, .delete-forever-button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.2s;
+}
+
+.restore-button {
+  background-color: #4CAF50;
+  color: white;
+  flex-grow: 1;
+}
+
+.restore-button:hover {
+  background-color: #43a047;
+}
+
+.delete-forever-button {
+  background-color: #ff3b30;
+  color: white;
+  flex-grow: 1;
+}
+
+.delete-forever-button:hover {
+  background-color: #e53935;
+}
+
+/* Hàm formatDate cần được định nghĩa */

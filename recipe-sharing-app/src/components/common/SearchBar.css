@@ -133,7 +133,7 @@
     border-top: 2px solid #ff6b6b;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-left: 10px;
+    margin-left: 20px;
 }
 
 @keyframes spin {

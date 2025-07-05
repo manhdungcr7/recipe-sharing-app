@@ -1,89 +1,72 @@
-import React, { useContext, useState, useCallback, memo, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useContext, useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { generateAvatarUrl } from '../../utils/imageUtils';
-import { debounce } from '../../utils/helpers';
-import { useStableColor } from '../../utils/colorUtils'; // Import từ utils/colorUtils
-import { API_BASE_URL, ENDPOINTS } from '../../config/api';
+import { getAvatarUrl } from '../../utils/imageUtils';
 import './Header.css';
 
-// Sử dụng memo để tránh re-render không cần thiết
-const Header = memo(() => {
+const Header = () => {
     const { currentUser, logout, isAuthenticated } = useContext(AuthContext);
     const [searchQuery, setSearchQuery] = useState('');
-    const [suggestions, setSuggestions] = useState([]);
-    const [popularKeywords, setPopularKeywords] = useState([]);
-    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [searchSuggestions, setSearchSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [avatarLoaded, setAvatarLoaded] = useState(false);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+    
     const navigate = useNavigate();
+    const location = useLocation();
+    const searchInputRef = useRef(null);
     const suggestionRef = useRef(null);
-    const searchRef = useRef(null);
-    
-    // Hàm fetch gợi ý tự động
-    const fetchSuggestions = async (query) => {
-        if (!query || query.length < 2) {
-            // Nếu không có query hoặc query quá ngắn, hiển thị từ khóa phổ biến
-            return;
+
+    // Kiểm tra xem có đang ở trang Dashboard hoặc Notifications không
+    const isDashboard = location.pathname === '/dashboard';
+    const isNotifications = location.pathname === '/notifications';
+
+    // Lấy số thông báo chưa đọc
+    useEffect(() => {
+        if (isAuthenticated) {
+            // Giả lập API gọi thông báo
+            setUnreadNotificationsCount(2); // Giá trị mẫu
         }
+    }, [isAuthenticated]);
+
+    // Thay thế hàm fetchSearchSuggestions hiện tại bằng hàm này
+    const fetchSearchSuggestions = async (query) => {
+        if (!query || query.length < 2) return;
         
+        setIsLoadingSuggestions(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/search/autocomplete?q=${encodeURIComponent(query)}`);
+            const response = await fetch(`http://localhost:5000/api/search/autocomplete?q=${encodeURIComponent(query)}`);            
             if (response.ok) {
                 const data = await response.json();
-                if (data.success) {
-                    setSuggestions(data.results || []);
-                    setShowSuggestions(true);
-                }
+                // API trả về results chứ không phải data
+                setSearchSuggestions(data.results || []);
+                setShowSuggestions(true);
             }
         } catch (error) {
-            console.error('Error fetching suggestions:', error);
+            console.error('Error fetching search suggestions:', error);
+        } finally {
+            setIsLoadingSuggestions(false);
         }
     };
-    
-    // Fetch từ khóa phổ biến khi component được mount
-    const fetchPopularKeywords = async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/search/popular`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    setPopularKeywords(data.popularKeywords || []);
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching popular keywords:', error);
+
+    // Xử lý click vào gợi ý
+    const handleSuggestionClick = (suggestion) => {
+        if (suggestion.type === 'recipe') {
+            navigate(`/recipe/${suggestion.id}`);
+        } else if (suggestion.type === 'user') {
+            navigate(`/profile/${suggestion.id}`);
+        } else {
+            setSearchQuery(suggestion.name || suggestion.query);
+            navigate(`/search?q=${encodeURIComponent(suggestion.name || suggestion.query)}`);
         }
+        setShowSuggestions(false);
     };
-    
-    // Load từ khóa phổ biến khi component mount
+
+    // Thêm useEffect để xử lý click bên ngoài dropdown
     useEffect(() => {
-        fetchPopularKeywords();
-    }, []);
-    
-    // Debounce tìm kiếm để tránh gọi API quá nhiều
-    useEffect(() => {
-        const debounceTimer = setTimeout(() => {
-            if (searchQuery) {
-                fetchSuggestions(searchQuery);
-            } else {
-                setSuggestions([]);
-            }
-        }, 300);
-        
-        return () => clearTimeout(debounceTimer);
-    }, [searchQuery]);
-    
-    // Xử lý click bên ngoài để đóng gợi ý
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                suggestionRef.current && 
-                !suggestionRef.current.contains(event.target) &&
-                searchRef.current && 
-                !searchRef.current.contains(event.target)
-            ) {
+        const handleClickOutside = (e) => {
+            if (suggestionRef.current && !suggestionRef.current.contains(e.target) &&
+                searchInputRef.current && !searchInputRef.current.contains(e.target)) {
                 setShowSuggestions(false);
             }
         };
@@ -91,227 +74,189 @@ const Header = memo(() => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-    
-    // Xử lý tìm kiếm
+
     const handleSearch = (e) => {
         e.preventDefault();
         if (searchQuery.trim()) {
-            navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+            navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
             setShowSuggestions(false);
         }
     };
-    
-    // Xử lý khi click vào gợi ý
-    const handleSuggestionClick = (suggestion) => {
-        setShowSuggestions(false);
-        
-        if (suggestion.type === 'recipe') {
-            navigate(`/recipe/${suggestion.id}`);
-        } else if (suggestion.type === 'user') {
-            navigate(`/profile/${suggestion.id}`);
-        } else {
-            setSearchQuery(suggestion);
-            navigate(`/search?q=${encodeURIComponent(suggestion)}`);
-        }
-    };
-    
-    // Xử lý sự kiện khi ảnh tải xong
-    const handleImageLoad = () => {
-        setAvatarLoaded(true);
-    };
 
-    const handleImageError = (e) => {
-        e.target.src = generateAvatarUrl(userName);
-        setAvatarLoaded(true);
-    };
-
-    const avatarColor = useStableColor(currentUser?.id);
-
-    const userName = currentUser?.name || 'Người dùng';
-    const userAvatar = currentUser?.picture 
-                  ? `http://localhost:5000${currentUser.picture}` 
-                  : generateAvatarUrl(userName);
-    const userId = currentUser?.id;
-    const logoLink = isAuthenticated ? "/dashboard" : "/";
-
-    // Thêm hàm handleLogout ở đây
     const handleLogout = () => {
-        logout(); // Gọi hàm logout từ AuthContext
-        navigate('/login'); // Chuyển hướng về trang login
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        logout();
+        navigate('/login');
     };
-    
-    // Thêm useEffect để lấy số lượng thông báo chưa đọc
-    useEffect(() => {
-      const fetchUnreadCount = async () => {
-        if (!isAuthenticated) return;
-        
-        try {
-          const token = localStorage.getItem('token');
-          if (!token) return;
-          
-          // Sử dụng API_BASE_URL và ENDPOINTS
-          const response = await fetch(`${API_BASE_URL}${ENDPOINTS.notifications.unreadCount}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            setUnreadNotificationsCount(data.count || 0);
-          }
-        } catch (error) {
-          console.error('Error fetching unread notifications:', error);
-        }
-      };
-      
-      fetchUnreadCount();
-      
-      // Thiết lập polling để cập nhật số lượng thông báo mỗi phút
-      const intervalId = setInterval(fetchUnreadCount, 60000);
-      return () => clearInterval(intervalId);
-    }, [isAuthenticated, currentUser]);
-    
+
+    // Trong component Header, đảm bảo chỉ render một lần bằng cách thêm điều kiện
+    // Thêm kiểm tra vào đoạn đầu của hàm render 
+    // (Thêm dòng này ngay sau khai báo các biến của component)
+
+    // Kiểm tra xem đã có header nào khác trên trang chưa
+    const existingHeader = document.querySelectorAll('.header-container').length > 0;
+    const isNestedLayout = document.querySelectorAll('.main-layout').length > 1;
+
+    // Nếu đây là header lồng ghép trong layout khác, không render
+    if (isNestedLayout && existingHeader) {
+      return null;
+    }
+
+    // Tiếp tục render header bình thường ở phần còn lại
     return (
-        <header className="header">
-            <div className="container">
-                <Link to="/" className="logo">
-                    <img src="/logo.png" alt="Recipe Sharing" className="logo-image" />
-                </Link>
-                
-                <div className="header-spacer"></div>
-                
-                <div className="search-bar" ref={searchRef}>
+        <header className={`main-header ${isDashboard ? 'dashboard-header' : ''}`}>
+            <div className="header-container">
+                <div className="header-left">
+                    <div className="header-logo">
+                        <img src="/logo.png" alt="Recipe Sharing Logo" />
+                        <h1>Recipe Sharing</h1>
+                    </div>
+                </div>
+
+                <div className="search-container">
                     <form onSubmit={handleSearch}>
-                        <input
-                            type="text"
-                            placeholder="Tìm kiếm công thức..."
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            onFocus={() => {
-                                setIsSearchFocused(true);
-                                setShowSuggestions(true);
-                            }}
-                        />
-                        <button type="submit">
-                            <i className="fas fa-search"></i>
-                        </button>
+                        <div className="search-input-wrapper">
+                            <input
+                                type="text"
+                                className="search-input"
+                                placeholder="Tìm kiếm công thức..."
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    // Chỉ gọi API gợi ý khi có ít nhất 2 ký tự
+                                    if (e.target.value.length >= 2) {
+                                        fetchSearchSuggestions(e.target.value);
+                                    } else {
+                                        setSearchSuggestions([]);
+                                        setShowSuggestions(false);
+                                    }
+                                }}
+                                ref={searchInputRef}
+                            />
+                            <button type="submit" className="search-button" aria-label="Tìm kiếm">
+                                <i className="fas fa-search"></i>
+                            </button>
+                        </div>
                     </form>
-                    
-                    {/* Dropdown gợi ý tìm kiếm */}
-                    {showSuggestions && (
-                        <div className="search-suggestions" ref={suggestionRef}>
-                            {searchQuery.length < 2 ? (
-                                <>
-                                    <div className="suggestion-header">
-                                        <span className="suggestion-title">Tìm kiếm phổ biến</span>
-                                    </div>
-                                    <div className="suggestion-list">
-                                        {popularKeywords.map((keyword, index) => (
-                                            <div 
-                                                key={`popular-${index}`}
-                                                className="suggestion-item"
-                                                onClick={() => handleSuggestionClick(keyword)}
-                                            >
-                                                <i className="fas fa-search"></i>
-                                                <span className="suggestion-text">{keyword}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
-                            ) : suggestions.length > 0 ? (
-                                <>
-                                    <div className="suggestion-list">
-                                        {suggestions.map((suggestion, index) => (
-                                            <div 
-                                                key={`${suggestion.type}-${suggestion.id || index}`} 
-                                                className="suggestion-item"
-                                                onClick={() => handleSuggestionClick(suggestion)}
-                                            >
-                                                {suggestion.type === 'recipe' ? (
-                                                    <>
-                                                        <i className="fas fa-utensils"></i>
-                                                        <span className="suggestion-text">{suggestion.title}</span>
-                                                    </>
-                                                ) : suggestion.type === 'user' ? (
-                                                    <>
-                                                        <i className="fas fa-user"></i>
-                                                        <span className="suggestion-text">{suggestion.name}</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <i className="fas fa-search"></i>
-                                                        <span className="suggestion-text">{suggestion}</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    
-                                    {/* Hiển thị button tìm kiếm đầy đủ */}
-                                    <div 
-                                        className="suggestion-footer"
-                                        onClick={handleSearch}
+
+                    {/* Gợi ý tìm kiếm */}
+                    {showSuggestions && searchSuggestions && searchSuggestions.length > 0 && (
+                        <div 
+                            className="search-suggestions" 
+                            ref={suggestionRef}
+                            style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                width: '100%',
+                                backgroundColor: 'white',
+                                borderRadius: '0 0 8px 8px',
+                                boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                                zIndex: 100,
+                                maxHeight: '300px',
+                                overflowY: 'auto'
+                            }}
+                        >
+                            <ul className="suggestion-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                {searchSuggestions.map((suggestion, index) => (
+                                    <li 
+                                        key={`${suggestion.type}-${suggestion.id || index}`}
+                                        className="suggestion-item"
+                                        onClick={() => handleSuggestionClick(suggestion)}
+                                        style={{
+                                            padding: '10px 16px',
+                                            borderBottom: '1px solid #f0f0f0',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                     >
-                                        <i className="fas fa-search"></i>
-                                        <span className="suggestion-text">Tìm kiếm "{searchQuery}"</span>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="no-suggestions">
-                                    <p>Không tìm thấy kết quả phù hợp</p>
-                                </div>
-                            )}
+                                        {suggestion.type === 'recipe' ? (
+                                            <>
+                                                <i className="fas fa-utensils" style={{ marginRight: '10px' }}></i>
+                                                <span>{suggestion.name}</span>
+                                            </>
+                                        ) : suggestion.type === 'user' ? (
+                                            <>
+                                                <i className="fas fa-user" style={{ marginRight: '10px' }}></i>
+                                                <span>{suggestion.name}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="fas fa-search" style={{ marginRight: '10px' }}></i>
+                                                <span>{suggestion.name || suggestion.query}</span>
+                                            </>
+                                        )}
+                                    </li>
+                                ))}
+                                <li 
+                                    className="suggestion-item suggestion-search-all"
+                                    onClick={handleSearch}
+                                    style={{
+                                        padding: '10px 16px',
+                                        backgroundColor: '#f9f9f9',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        borderTop: '1px solid #e0e0e0'
+                                    }}
+                                >
+                                    <i className="fas fa-search" style={{ marginRight: '10px' }}></i>
+                                    <span>Tìm kiếm "{searchQuery}"</span>
+                                </li>
+                            </ul>
                         </div>
                     )}
                 </div>
-                
-                <nav className="header-nav">
+
+                <div className="header-actions">
                     {isAuthenticated ? (
                         <>
-                            <Link to="/create-recipe">Tạo công thức</Link>
-                            <div className="user-menu">
-                                <Link to="/dashboard" className="menu-item">
-                                    <i className="fas fa-home"></i> Trang chủ
-                                </Link>
-                                
-                                <Link to="/create-recipe" className="menu-item">
-                                    <i className="fas fa-plus"></i> Tạo công thức
-                                </Link>
-                                
-                                {/* Thêm nút thông báo */}
-                                <Link to="/notifications" className="menu-item notification-link">
-                                    <i className="fas fa-bell"></i> Thông báo
-                                    {unreadNotificationsCount > 0 && (
-                                      <span className="notification-badge">{unreadNotificationsCount}</span>
-                                    )}
-                                </Link>
-                                
-                                <Link to="/saved-recipes" className="menu-item">
-                                    <i className="fas fa-bookmark"></i> Đã lưu
-                                </Link>
-                                
-                                {currentUser?.role === 'admin' && (
-                                  <Link to="/admin" className="menu-item admin-link">
-                                    <i className="fas fa-user-shield"></i> Quản trị
-                                  </Link>
+                            <Link to="/create-recipe" className="create-recipe-btn">
+                                <i className="fas fa-plus"></i> Tạo công thức
+                            </Link>
+                            
+                            
+                            
+                            <Link to="/notifications" className="notification-icon">
+                                <i className="fas fa-bell"></i>
+                                {unreadNotificationsCount > 0 && (
+                                    <span className="notification-counter">{unreadNotificationsCount}</span>
                                 )}
-                                
-                                <div className="divider"></div>
-                                
-                                <button className="menu-item" onClick={handleLogout}>
-                                    <i className="fas fa-sign-out-alt"></i> Đăng xuất
-                                </button>
-                            </div>
+                            </Link>
+                            
+                            <Link to="/dashboard" className="user-profile-link">
+                                <img 
+                                    src={getAvatarUrl(currentUser?.picture)} 
+                                    alt={currentUser?.name || "User"}
+                                    className="user-avatar"
+                                    onError={(e) => {e.target.src = "/default-avatar.jpg"}}
+                                />
+                                <span className="user-name">{currentUser?.name}</span>
+                            </Link>
+                            
+                            <button onClick={handleLogout} className="logout-btn">
+                                <i className="fas fa-sign-out-alt"></i> Đăng xuất
+                            </button>
                         </>
                     ) : (
                         <>
-                            <Link to="/login" className="nav-login">Đăng nhập</Link>
-                            <Link to="/register" className="nav-register">Đăng ký</Link>
+                            <Link to="/login" className="action-btn login-btn">
+                                <i className="fas fa-sign-in-alt"></i> Đăng nhập
+                            </Link>
+                            
+                            <Link to="/register" className="action-btn register-btn">
+                                <i className="fas fa-user-plus"></i> Đăng ký
+                            </Link>
                         </>
                     )}
-                </nav>
+                </div>
             </div>
         </header>
     );
-});
+};
 
 export default Header;

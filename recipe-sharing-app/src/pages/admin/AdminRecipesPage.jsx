@@ -17,7 +17,7 @@ const AdminRecipesPage = () => {
   const fetchRecipes = async (page = 1) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token'); // Không phải 'token'
       
       // Xây dựng query parameters
       const params = new URLSearchParams();
@@ -80,7 +80,7 @@ const AdminRecipesPage = () => {
     if (!bulkAction || selectedRecipes.length === 0) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token'); // Không phải 'token'
       
       let endpoint = '';
       switch (bulkAction) {
@@ -135,7 +135,7 @@ const AdminRecipesPage = () => {
   // Xử lý phê duyệt công thức
   const handleApproveRecipe = async (recipeId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token'); // Không phải 'token'
       const response = await fetch(`http://localhost:5000/api/admin/recipes/${recipeId}/approve`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -158,7 +158,7 @@ const AdminRecipesPage = () => {
   // Xử lý từ chối công thức
   const handleRejectRecipe = async (recipeId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token'); // Không phải 'token'
       const response = await fetch(`http://localhost:5000/api/admin/recipes/${recipeId}/reject`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -183,7 +183,7 @@ const AdminRecipesPage = () => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa công thức này?')) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token'); // Không phải 'token'
       const response = await fetch(`http://localhost:5000/api/admin/recipes/${recipeId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -199,6 +199,12 @@ const AdminRecipesPage = () => {
       console.error('Error deleting recipe:', err);
       setError(err.message);
     }
+  };
+
+  // Xử lý xem chi tiết công thức
+  const handleViewRecipe = (recipe) => {
+    setModalRecipe(recipe);
+    setShowModal(true);
   };
 
   if (loading && recipes.length === 0) {
@@ -336,30 +342,40 @@ const AdminRecipesPage = () => {
                   <td>{new Date(recipe.created_at).toLocaleDateString('vi-VN')}</td>
                   <td>
                     <span className={`status-badge ${recipe.status}`}>
-                      {recipe.status === 'published' ? 'Đã xuất bản' : 
-                       recipe.status === 'pending_review' ? 'Chờ duyệt' : 
-                       recipe.status === 'rejected' ? 'Đã từ chối' : 'Bản nháp'}
+                      {recipe.status === 'published' 
+                        ? 'Đã xuất bản' 
+                        : (recipe.status === 'pending_review' 
+                          ? 'Chờ duyệt' 
+                          : (recipe.status === 'rejected' 
+                            ? 'Đã từ chối' 
+                            : 'Bản nháp'))}
                     </span>
                   </td>
                   <td className="actions">
-                    <button className="btn-view" onClick={() => showRecipeDetails(recipe)}>
-                      <i className="fas fa-eye"></i>
-                    </button>
-                    
-                    {recipe.status === 'pending_review' && (
-                      <>
-                        <button className="btn-approve" onClick={() => handleApproveRecipe(recipe.id)}>
-                          <i className="fas fa-check"></i>
-                        </button>
-                        <button className="btn-reject" onClick={() => handleRejectRecipe(recipe.id)}>
-                          <i className="fas fa-times"></i>
-                        </button>
-                      </>
-                    )}
-                    
-                    <button className="btn-delete" onClick={() => handleDeleteRecipe(recipe.id)}>
-                      <i className="fas fa-trash-alt"></i>
-                    </button>
+                    <div className="action-buttons">
+                      <button 
+                        className="view-btn"
+                        onClick={() => handleViewRecipe(recipe)}
+                        title="Xem chi tiết"
+                      >
+                        <i className="fas fa-eye"></i>
+                      </button>
+                      
+                      {recipe.status === 'pending_review' && (
+                        <>
+                          <button className="btn-approve" onClick={() => handleApproveRecipe(recipe.id)}>
+                            <i className="fas fa-check"></i>
+                          </button>
+                          <button className="btn-reject" onClick={() => handleRejectRecipe(recipe.id)}>
+                            <i className="fas fa-times"></i>
+                          </button>
+                        </>
+                      )}
+                      
+                      <button className="btn-delete" onClick={() => handleDeleteRecipe(recipe.id)}>
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -405,8 +421,14 @@ const AdminRecipesPage = () => {
 
       {/* Recipe Detail Modal */}
       {showModal && modalRecipe && (
-        <div className="admin-modal">
-          <div className="modal-content recipe-modal">
+        <div 
+          className="admin-modal-overlay" 
+          onClick={() => setShowModal(false)} // Thêm sự kiện này
+        >
+          <div 
+            className="admin-modal-content"
+            onClick={(e) => e.stopPropagation()} // Ngăn sự kiện bubble lên overlay
+          >
             <div className="modal-header">
               <h2>Chi tiết công thức</h2>
               <button className="btn-close" onClick={() => setShowModal(false)}>
@@ -415,40 +437,38 @@ const AdminRecipesPage = () => {
             </div>
             
             <div className="modal-body">
-              <div className="recipe-modal-image">
-                <img 
-                  src={modalRecipe.image_url ? `http://localhost:5000${modalRecipe.image_url}` : 'https://via.placeholder.com/400x250?text=No+Image'}
-                  alt={modalRecipe.title}
-                />
+              <div className="recipe-header">
+                <div className="recipe-title-section">
+                  <h3>{modalRecipe.title}</h3>
+                  <div className="recipe-meta">
+                    <div className="meta-item">
+                      <i className="fas fa-user"></i>
+                      <span>Tác giả: {modalRecipe.author_name}</span>
+                    </div>
+                    <div className="meta-item">
+                      <i className="fas fa-calendar"></i>
+                      <span>Ngày đăng: {new Date(modalRecipe.created_at).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                    <div className="meta-item">
+                      <i className="fas fa-tag"></i>
+                      <span>Trạng thái: 
+                        <span className={`status-badge ${modalRecipe.status}`}>
+                          {modalRecipe.status === 'published' ? 'Đã xuất bản' : 
+                           modalRecipe.status === 'pending_review' ? 'Chờ duyệt' : 
+                           modalRecipe.status === 'rejected' ? 'Đã từ chối' : 'Bản nháp'}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {modalRecipe.image_url && (
+                  <div className="recipe-image">
+                    <img src={`http://localhost:5000${modalRecipe.image_url}`} alt={modalRecipe.title} />
+                  </div>
+                )}
               </div>
-              
-              <h3 className="recipe-title">{modalRecipe.title}</h3>
-              
-              <div className="recipe-meta">
-                <div className="meta-item">
-                  <i className="fas fa-user"></i>
-                  <span>Tác giả: {modalRecipe.author_name || 'Không xác định'}</span>
-                </div>
-                <div className="meta-item">
-                  <i className="fas fa-clock"></i>
-                  <span>Thời gian nấu: {modalRecipe.cooking_time} phút</span>
-                </div>
-                <div className="meta-item">
-                  <i className="fas fa-calendar-alt"></i>
-                  <span>Ngày tạo: {new Date(modalRecipe.created_at).toLocaleDateString('vi-VN')}</span>
-                </div>
-                <div className="meta-item">
-                  <i className="fas fa-tag"></i>
-                  <span>Trạng thái: 
-                    <span className={`status-badge ${modalRecipe.status}`}>
-                      {modalRecipe.status === 'published' ? 'Đã xuất bản' : 
-                       modalRecipe.status === 'pending_review' ? 'Chờ duyệt' : 
-                       modalRecipe.status === 'rejected' ? 'Đã từ chối' : 'Bản nháp'}
-                    </span>
-                  </span>
-                </div>
-              </div>
-              
+
               {modalRecipe.description && (
                 <div className="recipe-section">
                   <h4>Mô tả</h4>

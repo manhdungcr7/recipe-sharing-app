@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Following = ({ userId, following: propFollowing, onClose = () => {} }) => {
     const [loading, setLoading] = useState(!propFollowing);
     const [following, setFollowing] = useState(propFollowing || []);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (propFollowing) {
@@ -42,7 +43,11 @@ const Following = ({ userId, following: propFollowing, onClose = () => {} }) => 
                             <Link 
                                 to={`/profile/${user.id}`}
                                 className="user-link"
-                                onClick={onClose}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    onClose();
+                                    navigate(`/profile/${user.id}`);
+                                }}
                             >
                                 <img 
                                     src={user.picture ? 

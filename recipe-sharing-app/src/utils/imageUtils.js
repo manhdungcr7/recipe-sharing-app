@@ -26,23 +26,29 @@ export const generateAvatarUrl = (name) => {
   return `https://ui-avatars.com/api/?background=random&name=${formattedName}`;
 };
 
-// Lấy URL đầy đủ cho hình ảnh công thức
+// Lấy URL đầy đủ cho hình ảnh (avatar hoặc recipe)
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http')) return imagePath;
+  return `http://localhost:5000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
+};
+
+// Lấy URL đầy đủ cho hình ảnh recipe với fallback
 export const getRecipeImageUrl = (imagePath) => {
-  // Kiểm tra null, undefined hoặc không phải chuỗi
-  if (!imagePath || typeof imagePath !== 'string') {
-    return '/placeholder-recipe.jpg'; // hoặc URL placeholder khác
-  }
+  if (!imagePath) return 'C:\Users\Lenovo\Documents\web_SE\recipe-sharing-app\public\default-recipe.jpg';
   
-  if (imagePath.startsWith('http')) {
-    return imagePath;
-  }
+  if (imagePath.startsWith('http')) return imagePath;
   
-  if (imagePath.startsWith('/')) {
-    return `http://localhost:5000${imagePath}`;
-  }
+  return `http://localhost:5000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
+};
+
+// Lấy URL đầy đủ cho hình ảnh avatar với fallback
+export const getAvatarUrl = (imagePath) => {
+  if (!imagePath) return '/default-avatar.jpg';
   
-  // Trường hợp còn lại: đường dẫn không bắt đầu bằng "/"
-  return `http://localhost:5000/${imagePath}`;
+  if (imagePath.startsWith('http')) return imagePath;
+  
+  return `http://localhost:5000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
 };
 
 // Kiểm tra file được chọn có đúng định dạng không

@@ -93,7 +93,7 @@
   border-radius: 10px;
   padding: 2px 6px;
   font-size: 12px;
-  margin-left: 5px;
+  margin-left: 20px;
 }
 
 .notifications-list {
@@ -113,6 +113,19 @@
 
 .notification-item.unread {
   background-color: #f5f5f5;
+}
+
+.notification-item[data-type="admin"],
+.notification-item[data-type="admin_message"],
+.notification-item[data-type="moderation"] {
+  background-color: #f0f7ff;
+  border-left: 3px solid #3498db;
+}
+
+.notification-item[data-type="admin"] .notification-icon,
+.notification-item[data-type="admin_message"] .notification-icon,
+.notification-item[data-type="moderation"] .notification-icon {
+  color: #3498db;
 }
 
 .notification-icon {

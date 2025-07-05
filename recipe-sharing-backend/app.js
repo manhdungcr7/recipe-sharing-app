@@ -260,6 +260,43 @@ app.get('/api/routes', (req, res) => {
 // Đăng ký route comments - Thêm dòng này nếu chưa có
 app.use('/api/comments', commentRoutes);
 
+// Thêm route debug
+app.get('/api/debug-routes', (req, res) => {
+  const routes = [];
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      routes.push(middleware.route.path);
+    }
+  });
+  res.json(routes);
+});
+
+// Thêm route này để hỗ trợ URL cũ
+app.use('/api/messages/admin', (req, res) => {
+  // Chuyển hướng request tới endpoint đúng
+  req.url = '/';
+  app._router.handle(req, res);
+});
+
+// Đăng ký route thật
+const messageRoutes = express.Router();
+messageRoutes.post('/', protect, notificationController.sendMessageToAdmin);
+app.use('/api/messages', messageRoutes);
+
+// Đặt đoạn này trong phần đăng ký routes
+
+// Đảm bảo recipeRoutes được import
+const recipeRoutes = require('./routes/recipeRoutes');
+
+// Đảm bảo đăng ký routes
+app.use('/api/recipes', recipeRoutes);
+
+// Chatbot routes
+const chatbotRoutes = require('./routes/chatbotRoutes');
+app.use('/api/chatbot', chatbotRoutes);
+
+// Đảm bảo các route động (có tham số) được đăng ký sau cùng
+
 // Error handler
 app.use(errorHandler);
 

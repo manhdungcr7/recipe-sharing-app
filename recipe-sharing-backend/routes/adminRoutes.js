@@ -1,48 +1,39 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/db');
-const { protect, admin } = require('../middleware/auth');
-
-// Controllers
-const recipeController = require('../controllers/recipeController');
-const reportController = require('../controllers/reportController');
-const adminReportController = require('../controllers/adminReportController');
-const notificationController = require('../controllers/notificationController');
+const authController = require('../controllers/authController');
 const adminUserController = require('../controllers/adminUserController');
 const adminRecipeController = require('../controllers/adminRecipeController');
+const adminReportController = require('../controllers/adminReportController');
+const reportController = require('../controllers/reportController');
 const adminCommentController = require('../controllers/adminCommentController');
+const { protect, admin } = require('../middleware/auth');
+const notificationController = require('../controllers/notificationController');
+const { pool } = require('../config/db');
+// Thêm import controller
+const adminSettingsController = require('../controllers/adminSettingsController');
+const adminNotificationController = require('../controllers/adminNotificationController');
+
+// Đăng nhập admin - không cần middleware bảo vệ
+router.post('/login', authController.adminLogin);
 
 // Thống kê tổng quan
 router.get('/stats', admin, async (req, res) => {
   try {
     const connection = await pool.getConnection();
-    
-    // Tổng số người dùng
     const [totalUsers] = await connection.query('SELECT COUNT(*) as count FROM users');
-    
-    // Người dùng mới trong 7 ngày
     const [newUsers] = await connection.query(
       'SELECT COUNT(*) as count FROM users WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)'
     );
-    
-    // Tổng số công thức
     const [totalRecipes] = await connection.query('SELECT COUNT(*) as count FROM recipes');
-    
-    // Công thức chờ duyệt
     const [pendingRecipes] = await connection.query(
       'SELECT COUNT(*) as count FROM recipes WHERE status = "pending_review"'
     );
-    
-    // Tổng số báo cáo
     const [totalReports] = await connection.query('SELECT COUNT(*) as count FROM reports');
-    
-    // Báo cáo chưa xử lý
     const [unresolvedReports] = await connection.query(
       'SELECT COUNT(*) as count FROM reports WHERE status = "pending"'
     );
-    
     connection.release();
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -74,7 +65,7 @@ router.get('/users/recent', admin, async (req, res) => {
        LIMIT 10`
     );
     connection.release();
-    
+
     res.status(200).json({
       success: true,
       data: users
@@ -101,7 +92,7 @@ router.get('/recipes/recent', admin, async (req, res) => {
        LIMIT 10`
     );
     connection.release();
-    
+
     res.status(200).json({
       success: true,
       data: recipes
@@ -115,36 +106,14 @@ router.get('/recipes/recent', admin, async (req, res) => {
   }
 });
 
-// APIs quản lý người dùng - Kiểm tra xem các hàm này có tồn tại trong userController
-// Nếu không có, cần tạo các hàm này hoặc thay thế bằng middleware trực tiếp
-router.get('/users', admin, async (req, res) => { // Thay thế userController.getAllUsers
-  try {
-    const connection = await pool.getConnection();
-    const [users] = await connection.query(
-      `SELECT id, name, email, picture, role, is_verified, created_at 
-       FROM users 
-       ORDER BY created_at DESC`
-    );
-    connection.release();
-    
-    res.status(200).json({
-      success: true,
-      data: users
-    });
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi lấy danh sách người dùng'
-    });
-  }
-});
+// APIs quản lý người dùng
+router.get('/users', admin, adminUserController.getUsers);
 
-router.put('/users/:id', admin, async (req, res) => { // Thay thế userController.updateUserByAdmin
+router.put('/users/:id', admin, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, role, is_verified } = req.body;
-    
+
     const connection = await pool.getConnection();
     await connection.query(
       `UPDATE users SET 
@@ -156,7 +125,7 @@ router.put('/users/:id', admin, async (req, res) => { // Thay thế userControll
       [name, email, role, is_verified, id]
     );
     connection.release();
-    
+
     res.status(200).json({
       success: true,
       message: 'Cập nhật người dùng thành công'
@@ -170,14 +139,14 @@ router.put('/users/:id', admin, async (req, res) => { // Thay thế userControll
   }
 });
 
-router.delete('/users/:id', admin, async (req, res) => { // Thay thế userController.deleteUser
+router.delete('/users/:id', admin, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const connection = await pool.getConnection();
     await connection.query('DELETE FROM users WHERE id = ?', [id]);
     connection.release();
-    
+
     res.status(200).json({
       success: true,
       message: 'Xóa người dùng thành công'
@@ -191,115 +160,76 @@ router.delete('/users/:id', admin, async (req, res) => { // Thay thế userContr
   }
 });
 
-// APIs quản lý công thức - Kiểm tra xem các hàm này có tồn tại trong recipeController
-router.get('/recipes', admin, async (req, res) => { // Thay thế recipeController.getAllRecipesForAdmin
-  try {
-    const connection = await pool.getConnection();
-    const [recipes] = await connection.query(
-      `SELECT r.id, r.title, r.image_url, r.status, r.created_at, 
-              u.name as author_name 
-       FROM recipes r
-       JOIN users u ON r.author_id = u.id
-       ORDER BY r.created_at DESC`
-    );
-    connection.release();
-    
-    res.status(200).json({
-      success: true,
-      data: recipes
-    });
-  } catch (error) {
-    console.error('Error fetching recipes:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi lấy danh sách công thức'
-    });
-  }
-});
+// APIs quản lý công thức
+router.get('/recipes', admin, adminRecipeController.getRecipes);
+router.put('/recipes/:id/approve', admin, /* xử lý */);
+router.put('/recipes/:id/reject', admin, /* xử lý */);
 
-router.put('/recipes/:id/approve', admin, async (req, res) => { // Thay thế recipeController.approveRecipe
-  try {
-    const { id } = req.params;
-    
-    const connection = await pool.getConnection();
-    await connection.query(
-      `UPDATE recipes SET status = 'published' WHERE id = ?`,
-      [id]
-    );
-    connection.release();
-    
-    res.status(200).json({
-      success: true,
-      message: 'Phê duyệt công thức thành công'
-    });
-  } catch (error) {
-    console.error('Error approving recipe:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi phê duyệt công thức'
-    });
-  }
-});
-
-router.put('/recipes/:id/reject', admin, async (req, res) => { // Thay thế recipeController.rejectRecipe
-  try {
-    const { id } = req.params;
-    
-    const connection = await pool.getConnection();
-    await connection.query(
-      `UPDATE recipes SET status = 'rejected' WHERE id = ?`,
-      [id]
-    );
-    connection.release();
-    
-    res.status(200).json({
-      success: true,
-      message: 'Từ chối công thức thành công'
-    });
-  } catch (error) {
-    console.error('Error rejecting recipe:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi từ chối công thức'
-    });
-  }
-});
+// Thêm route xóa công thức ở đây
+router.delete('/recipes/:id', admin, adminRecipeController.deleteRecipe);
 
 // Endpoints cho báo cáo
-router.post('/reports', auth, reportController.createReport);
-router.get('/reports/:id', auth, reportController.getReport);
+// router.post('/reports', protect, reportController.createReport);
+// router.get('/reports/:id', protect, reportController.getReport);
 
 // Endpoints cho admin quản lý báo cáo
-router.get('/admin/reports', auth, adminMiddleware, adminReportController.getReports);
-router.get('/admin/reports/:id', auth, adminMiddleware, adminReportController.getReport);
-router.patch('/admin/reports/:id/status', auth, adminMiddleware, adminReportController.updateReportStatus);
-router.post('/admin/reports/:id/respond', auth, adminMiddleware, adminReportController.respondToReport);
+// router.get('/admin/reports', protect, admin, adminReportController.getReports);
+// router.get('/admin/reports/:id', protect, admin, adminReportController.getReport);
+// router.patch('/admin/reports/:id/status', protect, admin, adminReportController.updateReportStatus);
+// router.post('/admin/reports/:id/respond', protect, admin, adminReportController.respondToReport);
 
-// Thêm routes cho quản lý báo cáo
+// Thêm routes cho quản lý báo cáo - chỉ admin mới được truy cập
 router.get('/reports', admin, adminReportController.getReports);
-router.get('/reports/:id', admin, adminReportController.getReportDetail);
-router.put('/reports/:id/status', admin, adminReportController.updateReportStatus);
+router.get('/reports/:id', admin, adminReportController.getReport);
+router.patch('/reports/:id/status', admin, adminReportController.updateReportStatus);
 router.post('/reports/:id/respond', admin, adminReportController.respondToReport);
 
+// Route cho người dùng tạo báo cáo
+//router.post('/user-reports', protect, reportController.createReport);
+
 // Endpoints cho quản lý thông báo
-router.get('/notifications', auth, notificationController.getUserNotifications);
-router.get('/notifications/unread-count', auth, notificationController.getUnreadCount);
-router.post('/notifications/:id/read', auth, notificationController.markAsRead);
-router.post('/notifications/read-all', auth, notificationController.markAllAsRead);
-router.post('/notifications/:id/reply', auth, notificationController.replyToAdmin);
-router.post('/notifications/message-admin', auth, notificationController.messageAdmin);
+router.get('/notifications', protect, notificationController.getUserNotifications);
+router.get('/notifications/unread-count', protect, notificationController.getUnreadCount);
+// router.post('/notifications/:id/read', protect, notificationController.markAsRead);
+// router.post('/notifications/read-all', protect, notificationController.markAllAsRead);
+//router.post('/notifications/:id/reply', protect, notificationController.replyToAdmin);
+//router.post('/notifications/message-admin', protect, notificationController.messageAdmin;
 
-// Thêm routes cho quản lý người dùng
+// ========================
+// CÁC ROUTE DƯỚI ĐÂY CÓ THỂ GÂY LỖI (NẾU CHƯA CÓ CONTROLLER)
+// Nếu bạn chưa có các hàm này trong adminUserController, adminRecipeController, adminCommentController thì hãy COMMENT lại!
+// ========================
+
 router.post('/users/:id/suspend', admin, adminUserController.suspendUser);
+
+// Thêm route gỡ khóa tài khoản
 router.post('/users/:id/unsuspend', admin, adminUserController.unsuspendUser);
-router.delete('/users/:id', admin, adminUserController.deleteUser);
 
-// Thêm routes cho quản lý công thức
-router.delete('/recipes/:id', admin, adminRecipeController.deleteRecipe);
-router.put('/recipes/:id/approve', admin, adminRecipeController.approveRecipe);
-router.put('/recipes/:id/reject', admin, adminRecipeController.rejectRecipe);
-
-// Thêm routes cho quản lý bình luận
 router.delete('/comments/:id', admin, adminCommentController.deleteComment);
+
+router.delete('/recipes/:id', admin, adminRecipeController.deleteRecipe);
+
+// Xóa công thức (dành cho admin)
+exports.deleteRecipe = async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+    
+    // Logic để xóa công thức...
+  } catch (error) {
+    // Xử lý lỗi...
+  }
+};
+
+// Thêm routes cài đặt hệ thống (đặt ở cuối file trước module.exports)
+// Cài đặt hệ thống
+router.get('/settings', admin, adminSettingsController.getSettings);
+router.put('/settings', admin, adminSettingsController.updateSettings);
+
+// Thêm route (đặt cùng với các route users khác)
+router.post('/users/:id/notify', admin, adminNotificationController.sendNotification);
+
+// Thêm vào danh sách routes
+router.get('/notifications', admin, adminNotificationController.getAdminNotifications);
 
 module.exports = router;

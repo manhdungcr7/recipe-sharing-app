@@ -51,25 +51,9 @@ const MainLayout = React.memo(({ children }) => {
   // Render layout đầy đủ trong trường hợp bình thường
   return (
     <div className="main-layout">
-      <Header />
-      <div className="user-info">
-        {isAuthenticated ? (
-          <>
-            <span className="username">{currentUser?.name || "Người dùng"}</span>
-            <div className="avatar">
-              {currentUser?.picture ? (
-                <img src={currentUser.picture} alt={currentUser.name} />
-              ) : (
-                <span>{getInitials(currentUser?.name)}</span>
-              )}
-            </div>
-          </>
-        ) : (
-          <Link to="/login">Đăng nhập</Link>
-        )}
-      </div>
+      <Header /> {/* Chỉ có một Header duy nhất */}
       <main className="main-content">
-        {children || <Outlet />}
+        {children}
       </main>
       <Footer />
     </div>

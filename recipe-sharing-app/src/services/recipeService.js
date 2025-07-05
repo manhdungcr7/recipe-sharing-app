@@ -1,15 +1,20 @@
 import api from './api';
 
 // Lấy tất cả công thức
-export const fetchRecipes = async (params = {}) => {
+export const fetchRecipes = async (page = 1, limit = 10, filters = {}) => {
   try {
-    const queryParams = new URLSearchParams(params).toString();
-    const response = await fetch(`http://localhost:5000/api/recipes?${queryParams}`);
+    // Thay đổi endpoint từ /api/recipes? thành /api/recipes/saved/ hoặc endpoint khả dụng
+    const response = await fetch(`http://localhost:5000/api/search/recipes?page=${page}&limit=${limit}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+      }
+    });
+    
     if (!response.ok) {
       throw new Error('Failed to fetch recipes');
     }
-    const data = await response.json();
-    return data;
+    
+    return await response.json();
   } catch (error) {
     console.error('Error fetching recipes:', error);
     throw error;

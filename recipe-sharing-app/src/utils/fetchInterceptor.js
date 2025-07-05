@@ -34,53 +34,20 @@ const checkApiPort = async () => {
 const setupFetchInterceptor = () => {
   const originalFetch = window.fetch;
   
-  window.fetch = async function(url, options = {}) {
-    // Thêm try-catch bao quanh toàn bộ hàm
-    try {
-      // Đảm bảo URL là chuẩn khi gọi API
-      if (url.includes('/api/') && !url.includes('http')) {
-        url = `http://localhost:5000${url}`;
-      }
+  window.fetch = async (url, options = {}) => {
+    // Nếu là request API gửi đến backend
+    if (url.includes('/api/')) {
+      const token = localStorage.getItem('auth_token'); // Thống nhất dùng auth_token
       
-      // Nếu là request API, thêm token vào header
-      if (url.includes('/api/')) {
-        const token = localStorage.getItem('token');
-        
-        if (token) {
-          options.headers = {
-            ...options.headers,
-            'Authorization': `Bearer ${token}`
-          };
-        }
+      if (token) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${token}`
+        };
       }
-      
-      try {
-        const response = await originalFetch(url, options);
-        
-        // Kiểm tra response
-        if (response.status === 401) {
-          console.warn('Authentication failed. Logging out...');
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          
-          // Chuyển hướng đến trang đăng nhập nếu không phải đang ở đó
-          if (!window.location.pathname.includes('/login')) {
-            window.location.href = '/login';
-          }
-        }
-        
-        return response;
-      } catch (fetchError) {
-        console.error('Fetch error:', fetchError);
-        // Log thông tin chi tiết
-        console.log('URL attempted:', url);
-        console.log('Options:', JSON.stringify(options));
-        throw fetchError;
-      }
-    } catch (error) {
-      console.error('Fetch interceptor error:', error);
-      throw error;
     }
+    
+    return originalFetch(url, options);
   };
 };
 

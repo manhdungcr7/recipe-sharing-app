@@ -1,25 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './RecipeCard.css';
 import { formatDate } from '../../utils/helpers';
+import { getRecipeImageUrl } from '../../utils/imageUtils';
 
 const RecipeCard = ({ recipe, onClick }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Tạo URL hình ảnh đầy đủ
+  // Thay hàm getImageUrl() hiện tại
   const getImageUrl = () => {
-    if (!recipe.image_url) {
-      return null;
-    }
-    
-    // Đảm bảo URL luôn bắt đầu bằng http://localhost:5000
-    if (recipe.image_url.startsWith('http')) {
-      return recipe.image_url;
-    }
-    
-    // Đảm bảo đường dẫn có / ở đầu
-    const path = recipe.image_url.startsWith('/') ? recipe.image_url : `/${recipe.image_url}`;
-    return `http://localhost:5000${path}`;
+    return getRecipeImageUrl(recipe.image_url);
   };
 
   // Kiểm tra xem recipe có ảnh không

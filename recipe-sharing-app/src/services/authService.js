@@ -12,7 +12,7 @@ const authService = {
         const data = await response.json();
         
         if (data.success) {
-            localStorage.setItem('token', data.token);
+            // THAY ĐỔI TẠI ĐÂY: Dùng auth_token thay vì token
             localStorage.setItem('user', JSON.stringify(data.user));
             return data.user;
         } else {
@@ -22,13 +22,16 @@ const authService = {
 
     // Đăng xuất
     logout: () => {
-        localStorage.removeItem('token');
+        // THAY ĐỔI TẠI ĐÂY: Xóa auth_token
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('token'); // giữ để xóa token cũ nếu có
         localStorage.removeItem('user');
     },
 
     // Kiểm tra nếu đã đăng nhập
     isAuthenticated: () => {
-        return !!localStorage.getItem('token');
+        // THAY ĐỔI TẠI ĐÂY: Kiểm tra auth_token
+        return !!localStorage.getItem('auth_token');
     },
 
     // Lấy thông tin người dùng từ localStorage
@@ -42,5 +45,11 @@ const authService = {
         return user && user.role === 'admin';
     }
 };
+
+// VÍ DỤ: Trong fetch interceptor hoặc các service khác
+const token = localStorage.getItem('auth_token');  // Thay vì 'token'
+if (token) {
+  headers.Authorization = `Bearer ${token}`;
+}
 
 export default authService;

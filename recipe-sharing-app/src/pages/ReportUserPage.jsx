@@ -87,17 +87,15 @@ const ReportUserPage = () => {
       const token = localStorage.getItem('token');
       const finalReason = reason === 'Khác' ? otherReason : reason;
 
-      const response = await fetch('http://localhost:5000/api/reports', {
+      const response = await fetch(`http://localhost:5000/api/reports/user/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          type: 'user',
-          target_id: id,
           reason: finalReason,
-          description
+          details: description  // Đổi "description" thành "details" để khớp với controller
         })
       });
 

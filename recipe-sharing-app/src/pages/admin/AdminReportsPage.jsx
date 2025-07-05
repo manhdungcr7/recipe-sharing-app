@@ -16,55 +16,72 @@ const AdminReportsPage = () => {
   const [responseText, setResponseText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
-  const fetchReports = async (page = 1) => {
+  // Thêm state để quản lý modal tin nhắn
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageContent, setMessageContent] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  
+  // Thêm state mới
+  const [activeTab, setActiveTab] = useState('reports'); // 'reports' hoặc 'messages'
+  const [messages, setMessages] = useState([]);
+  
+  const fetchReports = async () => {
     try {
-        setLoading(true);
-        const token = localStorage.getItem('auth_token');
-        
-        // Build the query parameters
-        const params = new URLSearchParams();
-        params.append('page', page);
-        params.append('limit', 10);
-        
-        if (filterStatus !== 'all') {
-            params.append('status', filterStatus);
+      setLoading(true);
+      
+      // Thay đổi token này
+      const token = localStorage.getItem('auth_token');
+      
+      // Đảm bảo URL đúng với backend
+      const response = await fetch(`http://localhost:5000/api/admin/reports?page=${currentPage}&limit=10&status=${filterStatus}&type=${filterType}&search=${searchQuery}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        
-        if (filterType !== 'all') {
-            params.append('type', filterType);
-        }
-        
-        if (searchQuery) {
-            params.append('search', searchQuery);
-        }
-        
-        // Make the API request
-        const response = await fetch(`http://localhost:5000/api/admin/reports?${params.toString()}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Failed to fetch reports: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        setReports(data.data || []);
-        setTotalPages(data.pagination?.totalPages || 1);
-        
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch reports: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      setReports(data.data || []);
+      setTotalPages(data.pagination?.totalPages || 1);
+      
     } catch (error) {
-        console.error('Error fetching reports:', error);
-        setError(error.message);
+      console.error('Error fetching reports:', error);
+      setError(error.message);
     } finally {
-        setLoading(false);
+      setLoading(false);
+    }
+  };
+  
+  // Thêm hàm fetch messages
+  const fetchMessages = async () => {
+    if (activeTab !== 'messages') return;
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('http://localhost:5000/api/admin/notifications?type=admin_message', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) throw new Error('Không thể tải tin nhắn');
+      
+      const data = await response.json();
+      setMessages(data.data || []);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
     }
   };
   
   useEffect(() => {
-    fetchReports(currentPage);
-  }, [currentPage, filterStatus, filterType]);
+    if (activeTab === 'messages') {
+      fetchMessages();
+    } else {
+      fetchReports();
+    }
+  }, [activeTab, currentPage, filterStatus, filterType]);
   
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -82,9 +99,11 @@ const AdminReportsPage = () => {
     setResponseText('');
   };
   
+  // Hàm đổi trạng thái
   const handleStatusChange = async (reportId, newStatus) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
+      // Đảm bảo URL đúng
       const response = await fetch(`http://localhost:5000/api/admin/reports/${reportId}/status`, {
         method: 'PATCH',
         headers: {
@@ -115,25 +134,23 @@ const AdminReportsPage = () => {
     }
   };
   
+  // Hàm gửi phản hồi - sửa responseText thành response
   const handleSendResponse = async (e) => {
     e.preventDefault();
-    
     if (!responseText.trim()) return;
     
     try {
       setSubmitting(true);
       
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`http://localhost:5000/api/admin/reports/${selectedReport.id}/respond`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          message: responseText,
-          status: 'resolved' // Automatically mark as resolved when responding
-        })
+        // Thay đổi này: responseText -> response
+        body: JSON.stringify({ response: responseText })
       });
       
       if (!response.ok) {
@@ -171,7 +188,7 @@ const AdminReportsPage = () => {
     try {
       setSubmitting(true);
       
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const endpoint = action === 'delete' 
         ? `http://localhost:5000/api/admin/${selectedReport.type}s/${selectedReport.reported_id}`
         : `http://localhost:5000/api/admin/users/${selectedReport.reported_id}/suspend`;
@@ -242,6 +259,175 @@ const AdminReportsPage = () => {
     });
   };
   
+  // Thêm hoặc cập nhật hàm fetchReportDetail
+  const fetchReportDetail = async (reportId) => {
+    try {
+      setLoading(true);
+      
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/admin/reports/${reportId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Không thể lấy thông tin báo cáo');
+      }
+      
+      const data = await response.json();
+      setSelectedReport(data.data);
+    } catch (error) {
+      console.error('Error fetching report details:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Render thông tin chi tiết cho báo cáo người dùng
+  const renderUserReportDetails = (report) => (
+    <div className="report-details-section">
+      <h4>Thông tin người bị báo cáo</h4>
+      <div className="detail-item">
+        <span className="label">ID người dùng:</span>
+        <span className="value">{report.reported_id}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Tên người dùng:</span>
+        <span className="value">{report.reported_user_name}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Email:</span>
+        <span className="value">{report.reported_user_email}</span>
+      </div>
+      
+      <h4>Thông tin báo cáo</h4>
+      <div className="detail-item">
+        <span className="label">Người báo cáo:</span>
+        <span className="value">{report.reporter_name} (ID: {report.reporter_id})</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Lý do:</span>
+        <span className="value">{report.reason}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Chi tiết:</span>
+        <p className="value">{report.details}</p>
+      </div>
+    </div>
+  );
+
+  // Render thông tin chi tiết cho báo cáo comment
+  const renderCommentReportDetails = (report) => (
+    <div className="report-details-section">
+      <h4>Thông tin bình luận bị báo cáo</h4>
+      <div className="detail-item">
+        <span className="label">ID bình luận:</span>
+        <span className="value">{report.reported_id}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Nội dung bình luận:</span>
+        <p className="value">{report.comment_text}</p>
+      </div>
+      <div className="detail-item">
+        <span className="label">Người viết bình luận:</span>
+        <span className="value">{report.comment_author_name} (ID: {report.comment_author_id})</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Thuộc công thức:</span>
+        <span className="value">{report.recipe_title} (ID: {report.recipe_id})</span>
+      </div>
+      
+      <h4>Thông tin báo cáo</h4>
+      <div className="detail-item">
+        <span className="label">Người báo cáo:</span>
+        <span className="value">{report.reporter_name} (ID: {report.reporter_id})</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Lý do:</span>
+        <span className="value">{report.reason}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Chi tiết:</span>
+        <p className="value">{report.details}</p>
+      </div>
+    </div>
+  );
+
+  // Render thông tin chi tiết cho báo cáo công thức
+  const renderRecipeReportDetails = (report) => (
+    <div className="report-details-section">
+      <h4>Thông tin công thức bị báo cáo</h4>
+      <div className="detail-item">
+        <span className="label">ID công thức:</span>
+        <span className="value">{report.reported_id}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Tiêu đề:</span>
+        <span className="value">{report.recipe_title}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Người đăng:</span>
+        <span className="value">{report.recipe_author_name} (ID: {report.recipe_author_id})</span>
+      </div>
+      
+      <h4>Thông tin báo cáo</h4>
+      <div className="detail-item">
+        <span className="label">Người báo cáo:</span>
+        <span className="value">{report.reporter_name} (ID: {report.reporter_id})</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Lý do:</span>
+        <span className="value">{report.reason}</span>
+      </div>
+      <div className="detail-item">
+        <span className="label">Chi tiết:</span>
+        <p className="value">{report.details}</p>
+      </div>
+    </div>
+  );
+
+  // Hàm gửi tin nhắn đến admin
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    
+    if (!messageContent.trim()) {
+      alert('Vui lòng nhập nội dung tin nhắn');
+      return;
+    }
+    
+    try {
+      setSendingMessage(true);
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('http://localhost:5000/api/notifications/message-admin', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: messageContent
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Lỗi khi gửi tin nhắn');
+      }
+      
+      alert('Tin nhắn đã được gửi đến admin');
+      setMessageContent('');
+      setShowMessageModal(false);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert(error.message);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
   return (
     <div className="admin-reports-page">
       <h1>Quản lý báo cáo vi phạm</h1>
@@ -306,133 +492,184 @@ const AdminReportsPage = () => {
         </div>
       ) : (
         <>
-          <div className="reports-table-container">
-            <table className="reports-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Loại</th>
-                  <th>Nội dung báo cáo</th>
-                  <th>Người báo cáo</th>
-                  <th>Ngày báo cáo</th>
-                  <th>Trạng thái</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map(report => (
-                  <tr key={report.id} className={report.status === 'pending' ? 'highlight' : ''}>
-                    <td>{report.id}</td>
-                    <td>
-                      <span className="type-icon">
-                        <i className={getTypeIcon(report.type)}></i>
-                      </span>
-                      {report.type === 'recipe' ? 'Công thức' : 
-                       report.type === 'comment' ? 'Bình luận' : 'Người dùng'}
-                    </td>
-                    <td className="report-content-cell">
-                      <div className="report-reason">{report.reason}</div>
-                      <div className="report-target">
-                        {report.resource_title || `ID: ${report.reported_id}`}
-                      </div>
-                    </td>
-                    <td>{report.reporter_name}</td>
-                    <td>{formatDate(report.created_at)}</td>
-                    <td>
-                      <span className={`status-badge ${getStatusBadgeClass(report.status)}`}>
-                        {report.status === 'pending' ? 'Chờ xử lý' :
-                         report.status === 'investigating' ? 'Đang điều tra' :
-                         report.status === 'resolved' ? 'Đã giải quyết' :
-                         report.status === 'rejected' ? 'Đã từ chối' : report.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button 
-                          className="view-btn"
-                          onClick={() => handleViewReport(report)}
-                        >
-                          <i className="fas fa-eye"></i>
-                        </button>
-                        
-                        {report.status === 'pending' && (
-                          <button 
-                            className="investigate-btn"
-                            onClick={() => handleStatusChange(report.id, 'investigating')}
-                            title="Đánh dấu đang điều tra"
-                          >
-                            <i className="fas fa-search"></i>
-                          </button>
-                        )}
-                        
-                        {(report.status === 'pending' || report.status === 'investigating') && (
-                          <>
-                            <button 
-                              className="resolve-btn"
-                              onClick={() => handleStatusChange(report.id, 'resolved')}
-                              title="Đánh dấu đã giải quyết"
-                            >
-                              <i className="fas fa-check"></i>
-                            </button>
-                            
-                            <button 
-                              className="reject-btn"
-                              onClick={() => handleStatusChange(report.id, 'rejected')}
-                              title="Từ chối báo cáo này"
-                            >
-                              <i className="fas fa-times"></i>
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="tab-selector">
+            <button 
+              className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
+              onClick={() => setActiveTab('reports')}
+            >
+              Báo cáo
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'messages' ? 'active' : ''}`}
+              onClick={() => setActiveTab('messages')}
+            >
+              Tin nhắn từ người dùng
+            </button>
           </div>
           
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button 
-                onClick={() => handlePageChange(1)}
-                disabled={currentPage === 1}
-              >
-                <i className="fas fa-angle-double-left"></i>
-              </button>
+          {activeTab === 'reports' ? (
+            <>
+              <div className="reports-table-container">
+                <table className="reports-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Loại</th>
+                      <th>Nội dung báo cáo</th>
+                      <th>Người báo cáo</th>
+                      <th>Ngày báo cáo</th>
+                      <th>Trạng thái</th>
+                      <th>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reports.map(report => (
+                      <tr key={report.id} className={report.status === 'pending' ? 'highlight' : ''}>
+                        <td>{report.id}</td>
+                        <td>
+                          <span className="type-icon">
+                            <i className={getTypeIcon(report.type)}></i>
+                          </span>
+                          {report.type === 'recipe' ? 'Công thức' : 
+                           report.type === 'comment' ? 'Bình luận' : 'Người dùng'}
+                        </td>
+                        <td className="report-content-cell">
+                          <div className="report-reason">{report.reason}</div>
+                          <div className="report-target">
+                            {report.resource_title || `ID: ${report.reported_id}`}
+                          </div>
+                        </td>
+                        <td>{report.reporter_name}</td>
+                        <td>{formatDate(report.created_at)}</td>
+                        <td>
+                          <span className={`status-badge ${getStatusBadgeClass(report.status)}`}>
+                            {report.status === 'pending' ? 'Chờ xử lý' :
+                             report.status === 'investigating' ? 'Đang điều tra' :
+                             report.status === 'resolved' ? 'Đã giải quyết' :
+                             report.status === 'rejected' ? 'Đã từ chối' : report.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                            <button 
+                              className="view-btn"
+                              onClick={() => handleViewReport(report)}
+                            >
+                              <i className="fas fa-eye"></i>
+                            </button>
+                            
+                            {report.status === 'pending' && (
+                              <button 
+                                className="investigate-btn"
+                                onClick={() => handleStatusChange(report.id, 'investigating')}
+                                title="Đánh dấu đang điều tra"
+                              >
+                                <i className="fas fa-search"></i>
+                              </button>
+                            )}
+                            
+                            {(report.status === 'pending' || report.status === 'investigating') && (
+                              <>
+                                <button 
+                                  className="resolve-btn"
+                                  onClick={() => handleStatusChange(report.id, 'resolved')}
+                                  title="Đánh dấu đã giải quyết"
+                                >
+                                  <i className="fas fa-check"></i>
+                                </button>
+                                
+                                <button 
+                                  className="reject-btn"
+                                  onClick={() => handleStatusChange(report.id, 'rejected')}
+                                  title="Từ chối báo cáo này"
+                                >
+                                  <i className="fas fa-times"></i>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               
-              <button 
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <i className="fas fa-angle-left"></i>
-              </button>
-              
-              <span className="page-info">
-                Trang {currentPage} / {totalPages}
-              </span>
-              
-              <button 
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                <i className="fas fa-angle-right"></i>
-              </button>
-              
-              <button 
-                onClick={() => handlePageChange(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                <i className="fas fa-angle-double-right"></i>
-              </button>
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <button 
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                  >
+                    <i className="fas fa-angle-double-left"></i>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <i className="fas fa-angle-left"></i>
+                  </button>
+                  
+                  <span className="page-info">
+                    Trang {currentPage} / {totalPages}
+                  </span>
+                  
+                  <button 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <i className="fas fa-angle-right"></i>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <i className="fas fa-angle-double-right"></i>
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="messages-container">
+              {loading ? (
+                <div className="loading-spinner">Đang tải...</div>
+              ) : messages.length === 0 ? (
+                <div className="no-messages">Không có tin nhắn nào từ người dùng</div>
+              ) : (
+                <div className="messages-list">
+                  {messages.map(message => (
+                    <div key={message.id} className="message-item">
+                      <div className="message-header">
+                        <span className="message-sender">
+                          {message.sender_name || `User #${message.sender_id}`}
+                        </span>
+                        <span className="message-time">
+                          {new Date(message.created_at).toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                      <div className="message-content">{message.content}</div>
+                      <div className="message-actions">
+                        <button 
+                          className="reply-button"
+                          onClick={() => handleReplyMessage(message)}
+                        >
+                          <i className="fas fa-reply"></i> Phản hồi
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </>
       )}
       
       {showModal && selectedReport && (
-        <div className="report-detail-modal-overlay">
-          <div className="report-detail-modal">
+        <div className="report-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="report-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Chi tiết báo cáo #{selectedReport.id}</h2>
               <button className="close-modal" onClick={() => setShowModal(false)}>
@@ -589,6 +826,26 @@ const AdminReportsPage = () => {
                   </form>
                 </>
               )}
+              
+              {/* Thêm phần hiển thị tin nhắn từ người dùng */}
+              <div className="user-messages">
+                <h3>Tin nhắn từ người dùng</h3>
+                {selectedReport.messages && selectedReport.messages.length > 0 ? (
+                  <ul className="message-list">
+                    {selectedReport.messages.map((msg, index) => (
+                      <li key={index} className="message-item">
+                        <div className="message-header">
+                          <span className="message-sender">{msg.sender_name}</span>
+                          <span className="message-time">{formatDate(msg.created_at)}</span>
+                        </div>
+                        <div className="message-content">{msg.content}</div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="no-messages">Chưa có tin nhắn từ người dùng.</p>
+                )}
+              </div>
             </div>
           </div>
         </div>

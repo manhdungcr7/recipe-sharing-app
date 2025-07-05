@@ -7,9 +7,9 @@ useEffect(() => {
     if (!isAuthenticated) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('http://localhost:5000/api/notifications/unread-count', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${auth_token}` }
       });
       
       if (response.ok) {
@@ -39,7 +39,7 @@ const fetchUnreadCount = async () => {
   
   try {
     const response = await fetch('/api/notifications/unread-count', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
     });
     
     if (response.ok) {

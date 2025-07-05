@@ -2,6 +2,7 @@
 module.exports = require('./recipe');
 const { pool } = require('../config/db');
 const notificationController = require('./notificationController');
+const interactionController = require('./recipe/interactionRecipe');
 
 exports.getSavedRecipes = async (req, res) => {
   const userId = req.user.id; // Lấy từ middleware xác thực
@@ -48,5 +49,19 @@ exports.getSavedRecipes = async (req, res) => {
       related_recipe_id: recipeId
     });
   }
+};
+
+// Nếu sử dụng cấu trúc tách file riêng, kiểm tra import
+const deleteRecipe = require('./recipe/deleteRecipe');
+
+// Export deleteRecipe
+module.exports = {
+  // ...các controller khác
+  deleteRecipe,
+  likeRecipe: interactionController.likeRecipe,
+  saveRecipe: interactionController.saveRecipe,
+  unsaveRecipe: interactionController.unsaveRecipe,
+  shareRecipe: interactionController.shareRecipe,
+  exportRecipeToPDF: interactionController.exportRecipeToPDF
 };
 

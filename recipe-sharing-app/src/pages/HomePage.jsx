@@ -518,7 +518,7 @@ const HomePage = () => {
                                       alt={draft.title || "Bản nháp"}
                                       onError={(e) => {
                                         e.target.onerror = null;
-                                        e.target.src = '/images/default-recipe.jpg';
+                                        e.target.src = 'C:\Users\Lenovo\Documents\web_SE\recipe-sharing-app\public\default-recipe.jpg';
                                       }}
                                     />
                                   ) : (

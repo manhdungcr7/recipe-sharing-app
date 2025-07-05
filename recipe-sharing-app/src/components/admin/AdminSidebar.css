@@ -1,104 +1,168 @@
+/* Trạng thái mặc định của sidebar - ẩn */
 .admin-sidebar {
-  width: 240px;
-  min-width: 240px;
-  background-color: #ffffff;
-  border-right: 1px solid #e9ecef;
-  height: calc(100vh - 64px);
-  position: sticky;
-  top: 64px;
+  width: 220px;
+  background-color: #2c3e50;
+  color: white;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  height: calc(100vh - 60px);
   overflow-y: auto;
-  z-index: 10;
+  z-index: 900;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  transform: translateX(-220px); /* Mặc định ẩn sidebar */
 }
 
-.admin-sidebar-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+/* Khi sidebar hiển thị - dùng !important để ghi đè mọi style khác */
+.admin-sidebar.show {
+  transform: translateX(0) !important;
+  display: block !important;
+  visibility: visible !important;
 }
 
-.admin-nav {
-  flex: 1;
-  padding: 16px 0;
+/* Khi sidebar bị ẩn - không dùng !important */
+.admin-sidebar.hide {
+  transform: translateX(-220px);
 }
 
-.admin-nav ul {
+/* Menu list styles */
+.menu-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.admin-nav li {
-  margin: 4px 0;
+/* Thiết kế menu item */
+.menu-item {
+  margin: 8px 0;
 }
 
-.admin-nav a {
+/* Style cho menu link */
+.menu-link {
   display: flex;
   align-items: center;
-  padding: 12px 24px;
-  color: #495057;
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  position: relative;
 }
 
-.admin-nav a:hover {
-  color: #0d6efd;
-  background-color: rgba(13, 110, 253, 0.04);
+/* Hover effect cho menu */
+.menu-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-left: 3px solid #3498db;
 }
 
-.admin-nav a.active {
-  color: #0d6efd;
+/* Active menu item */
+.menu-link.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-left: 3px solid #3498db;
   font-weight: 500;
-  background-color: rgba(13, 110, 253, 0.08);
-  border-left: 3px solid #0d6efd;
 }
 
-.admin-nav i {
+/* Style cho icon menu */
+.menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   margin-right: 12px;
-  width: 20px;
-  text-align: center;
   font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px;
+  transition: all 0.3s ease;
 }
 
-.admin-sidebar-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #e9ecef;
-  color: #6c757d;
-  font-size: 12px;
+/* Style cho text menu */
+.menu-text {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
 }
 
-.admin-sidebar-footer p {
-  margin: 4px 0;
+/* Màu sắc cho từng loại menu */
+.menu-link[href*="dashboard"] .menu-icon {
+  background-color: rgba(76, 209, 55, 0.2);
+  color: #4cd137;
 }
 
+.menu-link[href*="users"] .menu-icon,
+.menu-link[href*="user"] .menu-icon {
+  background-color: rgba(232, 67, 147, 0.2);
+  color: #e84393;
+}
+
+.menu-link[href*="recipes"] .menu-icon,
+.menu-link[href*="recipe"] .menu-icon {
+  background-color: rgba(255, 159, 67, 0.2);
+  color: #ff9f43;
+}
+
+.menu-link[href*="reports"] .menu-icon,
+.menu-link[href*="report"] .menu-icon {
+  background-color: rgba(243, 156, 18, 0.2);
+  color: #f39c12;
+}
+
+.menu-link[href*="messages"] .menu-icon,
+.menu-link[href*="message"] .menu-icon {
+  background-color: rgba(0, 168, 255, 0.2);
+  color: #00a8ff;
+}
+
+.menu-link[href*="settings"] .menu-icon,
+.menu-link[href*="setting"] .menu-icon {
+  background-color: rgba(127, 140, 141, 0.2);
+  color: #7f8c8d;
+}
+
+/* Hiệu ứng khi hover vào menu */
+.menu-link:hover .menu-icon {
+  transform: scale(1.1);
+}
+
+/* Active menu effect */
+.menu-link.active .menu-icon {
+  transform: scale(1.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Separator giữa các nhóm menu */
+.menu-section {
+  padding: 12px 16px 8px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+/* Điều chỉnh content container khi sidebar thu gọn */
+.admin-content-container.expanded {
+  margin-left: 0;
+  width: 100%;
+}
+
+/* Đảm bảo chuyển động mượt mà */
+.admin-sidebar, .admin-content-container {
+  transition: all 0.3s ease;
+}
+
+/* Responsive styles */
 @media (max-width: 768px) {
   .admin-sidebar {
-    position: fixed;
-    left: 0;
-    top: 64px;
     transform: translateX(-100%);
-    transition: transform 0.3s;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 220px;
   }
   
   .admin-sidebar.show {
     transform: translateX(0);
-  }
-  
-  .admin-sidebar-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    background-color: #0d6efd;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: 100;
-    border: none;
   }
 }

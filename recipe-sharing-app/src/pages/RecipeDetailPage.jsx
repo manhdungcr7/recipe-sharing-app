@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { getRecipeImageUrl, generateAvatarUrl, generateRecipeImageUrl } from '../utils/imageUtils';
+import { getAvatarUrl } from '../utils/imageUtils';
 import './RecipeDetailPage.css';
 import Comments from '../components/comment/Comments';
 import ChatbotButton from '../components/chatbot/ChatbotButton';
-import ReportButton from '../components/report/ReportButton';
+import ReportButton from '../components/report/ReportButton'; // Thêm import
 
 const RecipeDetailPage = () => {
     const { id } = useParams();
@@ -283,33 +283,32 @@ const RecipeDetailPage = () => {
     }, [id]);
     
     // Hàm xử lý URL hình ảnh
-    const getRecipeImageUrl = (imageUrl) => {
-      // Kiểm tra null, undefined hoặc không phải chuỗi
-      if (!imageUrl || typeof imageUrl !== 'string') {
-        return '/placeholder-recipe.jpg'; // hoặc URL placeholder khác
-      }
-
-      if (imageUrl.startsWith('http')) {
-        return imageUrl;
-      }
-
-      // Đảm bảo đường dẫn có tiền tố "/"
-      const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-      return `http://localhost:5000${path}`;
+    const getRecipeImageUrl = (imagePath) => {
+      if (!imagePath) return "/default-recipe.jpg";
+      
+      // Thêm điều kiện kiểm tra bắt đầu bằng '/'
+      if (imagePath.startsWith('http')) return imagePath;
+      if (imagePath.startsWith('/')) return `http://localhost:5000${imagePath}`;
+      return `http://localhost:5000/${imagePath}`; // Thêm / nếu không có
     };
     
     // Thêm hàm này vào component RecipeDetailPage
     const handleDeleteRecipe = async () => {
-      if (window.confirm('Bạn có chắc chắn muốn xóa công thức này không? Hành động này không thể hoàn tác.')) {
+      if (window.confirm('Bạn có chắc chắn muốn xóa công thức này không?')) {
         try {
           setLoading(true);
-          const token = localStorage.getItem('token');
-          if (!token) {
-            alert('Bạn cần đăng nhập để thực hiện hành động này');
-            return;
-          }
+          const token = localStorage.getItem('auth_token');
           
-          const response = await fetch(`http://localhost:5000/api/recipes/${id}`, {
+          // Sửa lại URL - sử dụng endpoint đúng theo vai trò người dùng
+          const currentUser = JSON.parse(localStorage.getItem('user'));
+          const isAdmin = currentUser && currentUser.role === 'admin';
+          
+          // Chọn URL dựa vào vai trò người dùng
+          const url = isAdmin 
+            ? `http://localhost:5000/api/admin/recipes/${id}`
+            : `http://localhost:5000/api/recipes/${id}`;
+          
+          const response = await fetch(url, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -432,7 +431,7 @@ const RecipeDetailPage = () => {
                     alt={recipe.title}
                     onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(recipe.title)}&size=512&background=random`;
+                        e.target.src = "/default-recipe.jpg";
                     }}
                 />
             </div>
@@ -558,11 +557,11 @@ const RecipeDetailPage = () => {
                 </button>
                 
                 {/* Thêm nút báo cáo nếu không phải là tác giả */}
-                {!showAuthorActions && currentUser && (
+                {!showAuthorActions && currentUser && recipe && recipe.id && (
                     <ReportButton 
-                        type="recipe" 
-                        id={id} 
-                        title={recipe.title} 
+                        type="recipe"
+                        targetId={recipe.id}
+                        targetName={recipe.title}
                     />
                 )}
             </div>

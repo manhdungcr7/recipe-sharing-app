@@ -107,33 +107,21 @@ const SearchResultsPage = () => {
   };
   
   return (
-    <div className="search-results-page">
-      <h1>Kết quả tìm kiếm: {query}</h1>
+    <div className="search-results-container">
+      {/* Cập nhật phần hiển thị tiêu đề kết quả tìm kiếm */}
+      <h1 className="search-results-title">
+        Kết quả tìm kiếm: <span className="search-keyword">{query}</span>
+      </h1>
       
-      {/* Thanh tìm kiếm */}
-      <div className="search-bar">
-        <input
-          type="text"
-          defaultValue={query}
-          placeholder="Tìm kiếm..."
-          onKeyPress={(e) => {
-            if (e.key === 'Enter') {
-              navigate(`/search?q=${encodeURIComponent(e.target.value)}`);
-            }
-          }}
-        />
-      </div>
-      
-      {/* Tab điều hướng */}
       <div className="search-tabs">
         <button 
-          className={activeTab === 'recipes' ? 'active' : ''} 
+          className={`search-tab ${activeTab === 'recipes' ? 'active' : ''}`}
           onClick={() => handleTabChange('recipes')}
         >
           Công thức
         </button>
         <button 
-          className={activeTab === 'users' ? 'active' : ''} 
+          className={`search-tab ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => handleTabChange('users')}
         >
           Người dùng
@@ -148,12 +136,12 @@ const SearchResultsPage = () => {
       
       {/* Kết quả tìm kiếm công thức */}
       {activeTab === 'recipes' && !loading && (
-        <div className="recipes-results">
-          {/* Filters */}
+        <>
           <div className="search-filters">
             <div className="filter-group">
-              <label>Danh mục:</label>
+              <label className="filter-label">Danh mục:</label>
               <select 
+                className="filter-select"
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
               >
@@ -167,8 +155,9 @@ const SearchResultsPage = () => {
             </div>
             
             <div className="filter-group">
-              <label>Nguyên liệu chính:</label>
+              <label className="filter-label">Nguyên liệu chính:</label>
               <input
+                className="filter-input"
                 type="text"
                 placeholder="Ví dụ: trứng"
                 value={filters.ingredient}
@@ -177,8 +166,9 @@ const SearchResultsPage = () => {
             </div>
             
             <div className="filter-group">
-              <label>Thời gian:</label>
+              <label className="filter-label">Thời gian:</label>
               <select 
+                className="filter-select"
                 value={filters.time}
                 onChange={(e) => handleFilterChange('time', e.target.value)}
               >
@@ -192,19 +182,51 @@ const SearchResultsPage = () => {
           
           {/* Kết quả */}
           {recipeResults.length > 0 ? (
-            <div className="recipes-grid">
+            <div className="recipe-results-grid">
               {recipeResults.map(recipe => (
-                <Link to={`/recipe/${recipe.id}`} key={recipe.id}>
-                  <RecipeCard recipe={recipe} />
-                </Link>
+                <div key={recipe.id} className="recipe-card" onClick={() => navigate(`/recipe/${recipe.id}`)}>
+                  <img 
+                    className="recipe-image" 
+                    src={recipe.image_url ? `http://localhost:5000${recipe.image_url}` : '/default-recipe.jpg'} 
+                    alt={recipe.title} 
+                    onError={(e) => { e.target.src = '/default-recipe.jpg' }}
+                  />
+                  <div className="recipe-info">
+                    <h3 className="recipe-title">{recipe.title}</h3>
+                    <p className="recipe-description">{recipe.description || 'Không có mô tả'}</p>
+                    <div className="recipe-meta">
+                      <span className="recipe-author">
+                        <i className="fas fa-user"></i> {recipe.author_name}
+                      </span>
+                      <span className="recipe-time">
+                        <i className="fas fa-clock"></i> {recipe.cooking_time} phút
+                      </span>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
+            // Phần hiển thị khi không tìm thấy kết quả
             <div className="no-results">
-              <p>Không tìm thấy công thức nào phù hợp với từ khóa này.</p>
+              <div className="no-results-icon">
+                <i className="fas fa-search"></i>
+              </div>
+              <h3 className="no-results-heading">Không tìm thấy công thức nào phù hợp với từ khóa này.</h3>
+              <p className="no-results-text">Hãy thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc.</p>
+              
+              <div className="no-results-suggestions">
+                <h4>Gợi ý tìm kiếm phổ biến:</h4>
+                <div className="suggestion-chips">
+                  <span className="suggestion-chip" onClick={() => handleSuggestionClick('gà')}>Gà</span>
+                  <span className="suggestion-chip" onClick={() => handleSuggestionClick('hải sản')}>Hải sản</span>
+                  <span className="suggestion-chip" onClick={() => handleSuggestionClick('bánh')}>Bánh</span>
+                  <span className="suggestion-chip" onClick={() => handleSuggestionClick('lẩu')}>Lẩu</span>
+                </div>
+              </div>
             </div>
           )}
-        </div>
+        </>
       )}
       
       {/* Kết quả tìm kiếm người dùng */}

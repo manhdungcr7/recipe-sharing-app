@@ -311,15 +311,11 @@ const LoginPageWrapper = ({ setIsLoggedIn }) => {
       
       if (response.ok) {
         // Lưu token và user vào localStorage
-        localStorage.setItem('auth_token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
         // Cập nhật context
-        login(data.user, data.token);
-        setIsLoggedIn(true);
-        
-        // Điều hướng về trang chủ
-        navigate('/');
+        login(data.user, data.token); // cập nhật context ngay lập tức
+        navigate('/admin/dashboard');
       } else {
         throw new Error(data.message || 'Đăng nhập thất bại');
       }

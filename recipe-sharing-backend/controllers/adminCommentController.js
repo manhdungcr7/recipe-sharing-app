@@ -11,7 +11,7 @@ exports.deleteComment = async (req, res) => {
     
     // Kiểm tra bình luận có tồn tại không
     const [comments] = await connection.query(
-      'SELECT user_id, recipe_id, content FROM comments WHERE id = ?',
+      'SELECT user_id, recipe_id, text FROM comments WHERE id = ?',
       [id]
     );
     
@@ -25,33 +25,48 @@ exports.deleteComment = async (req, res) => {
     
     const userId = comments[0].user_id;
     
-    // Xóa báo cáo về bình luận này
+    await connection.beginTransaction();
+    
+    // 1. Cập nhật các bình luận con trước, đặt parent_id thành NULL
+    await connection.query('UPDATE comments SET parent_id = NULL WHERE parent_id = ?', [id]);
+    
+    // 2. Xóa báo cáo về bình luận này
     await connection.query('DELETE FROM reports WHERE type = "comment" AND reported_id = ?', [id]);
     
-    // Xóa bình luận
+    // 3. Xóa bình luận cha
     await connection.query('DELETE FROM comments WHERE id = ?', [id]);
     
-    // Gửi thông báo cho người viết bình luận
+    // 4. Gửi thông báo cho người viết bình luận
     const notificationData = {
-      user_id: userId,
-      type: 'comment_deleted',
-      title: 'Bình luận bị xóa',
+      recipient_id: userId,
+      sender_id: req.user.id,
+      type: 'moderation', 
       content: 'Bình luận của bạn đã bị quản trị viên xóa do vi phạm quy định.',
-      reference_id: comments[0].recipe_id,
-      reference_type: 'recipe'
+      related_recipe_id: comments[0].recipe_id
     };
     
-    await notificationController.createNotification(notificationData);
+    // Truyền thêm connection để dùng trong cùng transaction
+    await notificationController.createNotification(notificationData, connection);
     
+    await connection.commit();
     connection.release();
     
     res.status(200).json({
       success: true,
-      message: 'Đã xóa bình luận'
+      message: 'Đã xóa bình luận thành công'
     });
   } catch (error) {
     console.error('Error deleting comment:', error);
-    if (connection) connection.release();
+    
+    if (connection) {
+      try {
+        await connection.rollback();
+      } catch (err) {
+        console.error('Error rolling back transaction:', err);
+      } finally {
+        connection.release();
+      }
+    }
     
     res.status(500).json({
       success: false,

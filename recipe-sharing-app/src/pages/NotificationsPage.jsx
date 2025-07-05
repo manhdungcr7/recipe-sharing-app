@@ -27,7 +27,8 @@ const NotificationsPage = () => {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
+      // Thay đổi đoạn này - thử lấy token từ cả hai key
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       if (!token) {
         throw new Error('Bạn cần đăng nhập để xem thông báo');
       }
@@ -57,7 +58,8 @@ const NotificationsPage = () => {
   
   const handleMarkAsRead = async (id) => {
     try {
-      const token = localStorage.getItem('token');
+      // Sửa đoạn này
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -80,7 +82,8 @@ const NotificationsPage = () => {
   
   const handleMarkAllAsRead = async () => {
     try {
-      const token = localStorage.getItem('token');
+      // Sửa đoạn này
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       await fetch('http://localhost:5000/api/notifications/markAllRead', {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -107,7 +110,8 @@ const NotificationsPage = () => {
     
     try {
       setSubmitting(true);
-      const token = localStorage.getItem('token');
+      // Sửa đoạn này
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       
       const response = await fetch(`http://localhost:5000/api/notifications/${selectedNotification.id}/reply`, {
         method: 'POST',
@@ -115,7 +119,7 @@ const NotificationsPage = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ message: replyText })
+        body: JSON.stringify({ reply: replyText }) // Đảm bảo key này khớp với tham số trong controller (reply hoặc message)
       });
       
       if (!response.ok) {
@@ -140,9 +144,10 @@ const NotificationsPage = () => {
     
     try {
       setSubmitting(true);
-      const token = localStorage.getItem('token');
+      // Sửa đoạn này
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/messages/admin', {
+      const response = await fetch('http://localhost:5000/api/notifications/message-admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,9 +176,13 @@ const NotificationsPage = () => {
   const filteredNotifications = notifications.filter(notification => {
     if (activeTab === 'all') return true;
     if (activeTab === 'unread') return !notification.is_read;
-    if (activeTab === 'system') return notification.type === 'system';
+    // Loại bỏ dòng if (activeTab === 'system') return notification.type === 'system';
     if (activeTab === 'interaction') return ['like', 'comment', 'follow', 'save', 'share'].includes(notification.type);
-    if (activeTab === 'admin') return notification.type === 'admin';
+    if (activeTab === 'admin') {
+      // Chuyển thông báo 'system' vào tab Admin hoặc để trong tab 'Tất cả'
+      return notification.type === 'admin' || notification.type === 'moderation' || 
+             notification.type === 'admin_message' || notification.type === 'system';
+    }
     return true;
   });
   
@@ -185,26 +194,27 @@ const NotificationsPage = () => {
       case 'save': return 'fas fa-bookmark';
       case 'share': return 'fas fa-share-alt';
       case 'admin': return 'fas fa-shield-alt';
-      case 'system': return 'fas fa-bell';
+      // Thêm case cho moderation
+      case 'moderation': return 'fas fa-shield-alt';
       default: return 'fas fa-bell';
     }
   };
   
   const getNotificationLink = (notification) => {
-    if (
-      notification.type === 'like' ||
-      notification.type === 'comment' ||
-      notification.type === 'reply' ||
-      notification.type === 'new_post' // Thêm dòng này
-    ) {
-      let url = `/recipe/${notification.related_recipe_id || ''}`;
-      if (notification.related_comment_id) url += `?comment=${notification.related_comment_id}`;
-      return url;
+    // Thông báo từ admin không có link chuyển hướng
+    if (notification.type === 'admin' || notification.type === 'admin_message' || notification.type === 'moderation') {
+      return '#'; // Không chuyển hướng
     }
-    if (notification.type === 'follow') {
-      return `/profile/${notification.sender_id}`;
+    
+    // Các loại thông báo khác giữ nguyên logic hiện tại
+    if (notification.related_recipe_id) {
+      return `/recipes/${notification.related_recipe_id}`;
     }
-    return '#';
+    if (notification.related_comment_id) {
+      return `/recipes/${notification.related_recipe_id}#comment-${notification.related_comment_id}`;
+    }
+    // mã xử lý khác...
+    return '/notifications';
   };
 
   const getNotificationText = (notification) => {
@@ -245,8 +255,38 @@ const NotificationsPage = () => {
             <strong>Admin:</strong> {notification.content}
           </>
         );
+      // Thêm case cho thông báo moderation
+      case 'moderation':
+        return (
+          <>
+            <strong>Admin:</strong> {notification.content}
+          </>
+        );
+      // Thêm case cho thông báo admin_message
+      case 'admin_message':
+        return (
+          <>
+            <strong>Admin:</strong> {notification.content}
+          </>
+        );
       default:
         return notification.content;
+    }
+  };
+  
+  // Xử lý khi nhấn vào thông báo
+  const handleNotificationClick = (notification) => {
+    // Đánh dấu thông báo là đã đọc
+    if (!notification.is_read) {
+      handleMarkAsRead(notification.id);
+    }
+    
+    // Nếu là thông báo từ admin, hiển thị modal phản hồi
+    if (notification.type === 'admin' || notification.type === 'admin_message' || notification.type === 'moderation') {
+      handleReply(notification);
+    } else if (notification.related_recipe_id) {
+      // Chuyển hướng đến trang công thức nếu có
+      navigate(getNotificationLink(notification));
     }
   };
   
@@ -297,12 +337,6 @@ const NotificationsPage = () => {
         >
           Admin
         </button>
-        <button 
-          className={`tab-btn ${activeTab === 'system' ? 'active' : ''}`}
-          onClick={() => setActiveTab('system')}
-        >
-          Hệ thống
-        </button>
       </div>
       
       <div className="notifications-list">
@@ -331,14 +365,14 @@ const NotificationsPage = () => {
                 <i className={getNotificationIcon(notification.type)}></i>
               </div>
               <div className="notification-content">
-                <Link
-                  to={getNotificationLink(notification)}
+                {/* Thay thế Link bằng div với onClick event */}
+                <div
                   className="notification-text"
                   style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
-                  onClick={() => handleMarkAsRead(notification.id)}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   {getNotificationText(notification)}
-                </Link>
+                </div>
               </div>
             </div>
           ))
@@ -358,7 +392,7 @@ const NotificationsPage = () => {
             
             <div className="modal-body">
               <div className="original-message">
-                <p><strong>Admin:</strong> {selectedNotification.message}</p>
+                <p><strong>Admin:</strong> {selectedNotification.content}</p>
                 <span className="message-time">
                   {new Date(selectedNotification.created_at).toLocaleString('vi-VN')}
                 </span>

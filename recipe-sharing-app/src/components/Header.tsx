@@ -20,7 +20,6 @@ const Header: React.FC = () => {
         </div>
         <nav className="main-nav">
           <ul>
-            <li><Link to="/">Trang chủ</Link></li>
             {isAuthenticated && (
               <>
                 <li><Link to="/search">Tìm kiếm</Link></li>

@@ -54,40 +54,28 @@ const UserPosts = ({ userId }) => {
             <h2>Công thức của người dùng</h2>
             <div className="recipes-grid">
                 {recipes.map(recipe => (
-                    <Link to={`/recipe/${recipe.id}`} key={recipe.id} className="recipe-card">
-                        <div className="recipe-image">
-                          {recipe.image_url ? (
-                            <img
-                              src={
-                                recipe.image_url.startsWith('http')
-                                  ? recipe.image_url
-                                  : `http://localhost:5000${recipe.image_url.startsWith('/') ? recipe.image_url : '/' + recipe.image_url}`
-                              }
-                              alt={recipe.title}
-                            />
-                          ) : (
-                            <div
-                              className="recipe-image-placeholder"
-                              style={{
-                                backgroundColor: getBackgroundColor(recipe.title),
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '100%',
-                                height: '100%',
-                                fontSize: '2rem',
-                                color: 'white'
-                              }}
-                            >
-                              <span className="placeholder-text">{recipe.title.charAt(0).toUpperCase()}</span>
+                    <div key={recipe.id} className="recipe-card">
+                        <Link to={`/recipe/${recipe.id}`}>
+                            <div className="recipe-image-container">
+                                <img 
+                                    src={recipe.image_url 
+                                        ? (recipe.image_url.startsWith('http') 
+                                            ? recipe.image_url 
+                                            : `http://localhost:5000${recipe.image_url}`)
+                                        : "/default-recipe.jpg"} 
+                                    alt={recipe.title}
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "/default-recipe.jpg";
+                                    }}
+                                />
                             </div>
-                          )}
-                        </div>
-                        <div className="recipe-info">
-                            <h3>{recipe.title}</h3>
-                            <p>{recipe.description}</p>
-                        </div>
-                    </Link>
+                            <div className="recipe-info">
+                                <h3>{recipe.title}</h3>
+                                <p>{recipe.description}</p>
+                            </div>
+                        </Link>
+                    </div>
                 ))}
             </div>
         </div>

@@ -1,6 +1,7 @@
 const express = require('express');
 const adminController = require('../controllers/adminController');
 const { authenticate } = require('../middleware/auth');
+const authController = require('../controllers/authController');
 
 const router = express.Router();
 
@@ -15,5 +16,8 @@ router.delete('/users/:id', authenticate, adminController.deleteUser);
 // Route to moderate content
 router.get('/content', authenticate, adminController.getContent);
 router.put('/content/:id', authenticate, adminController.moderateContent);
+
+// Route đăng nhập admin
+router.post('/login', authController.adminLogin);
 
 module.exports = router;

@@ -98,15 +98,15 @@
 
 /* Menu tùy chọn khi click vào avatar */
 .avatar-options {
-  position: absolute;
-  top: 110%;
+  position: absolute !important;
+  top: 110% !important;
   left: 50%;
   transform: translateX(-50%);
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   width: 180px;
-  z-index: 1000;
+  z-index:999999999 !important;
   overflow: hidden;
 }
 

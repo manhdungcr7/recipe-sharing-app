@@ -8,7 +8,6 @@ const recipeRoutes = require('./routes/recipeRoutes');
 const userRoutes = require('./routes/userRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
-const adminRoutes = require('./routes/adminRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -24,7 +23,7 @@ app.use('/api/recipes', recipeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/chatbot', chatbotRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Health check route
 app.get('/api/status', (req, res) => {

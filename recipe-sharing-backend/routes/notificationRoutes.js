@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const notificationController = require('../controllers/notificationController');
 const { protect } = require('../middleware/auth');
+// Thêm import checkAccountStatus
+const { checkAccountStatus } = require('../middleware/checkAccountStatus');
+const notificationController = require('../controllers/notificationController');
+const { pool } = require('../config/db');
 
 // @route   GET /api/notifications
 // @desc    Get all notifications for the current user
@@ -26,7 +29,7 @@ router.put('/markAllRead', protect, async (req, res) => {
     const connection = await pool.getConnection();
     
     await connection.query(
-      'UPDATE notifications SET is_read = 1 WHERE user_id = ?',
+      'UPDATE notifications SET is_read = 1 WHERE recipient_id = ?',
       [req.user.id]
     );
     
@@ -44,5 +47,15 @@ router.put('/markAllRead', protect, async (req, res) => {
     });
   }
 });
+
+// @route   POST /api/notifications/message-admin
+// @desc    Send a message from user to admin
+// @access  Private
+router.post('/message-admin', protect, checkAccountStatus, notificationController.sendMessageToAdmin);
+
+// @route   POST /api/notifications/:id/reply
+// @desc    Reply to a notification from admin
+// @access  Private
+router.post('/:id/reply', protect, checkAccountStatus, notificationController.replyToNotification);
 
 module.exports = router;

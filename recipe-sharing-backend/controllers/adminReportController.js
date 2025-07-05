@@ -5,25 +5,22 @@ exports.getReports = async (req, res) => {
   let connection;
   try {
     const { page = 1, limit = 10, status, type, search } = req.query;
-    const offset = (page - 1) * limit;
+    console.log('Fetching reports with:', { page, limit, status, type, search });
+    
+    // Thêm dòng này để tính offset
+    const offset = (parseInt(page) - 1) * parseInt(limit);
     
     connection = await pool.getConnection();
     
     // Xây dựng câu truy vấn với các điều kiện lọc
     let query = `
-      SELECT r.*, 
-             u1.name as reporter_name, 
-             CASE 
-               WHEN r.type = 'user' THEN u2.name 
-               WHEN r.type = 'recipe' THEN rc.title 
-               WHEN r.type = 'comment' THEN c.text
-             END as resource_title
-       FROM reports r
-       INNER JOIN users u1 ON r.reporter_id = u1.id
-       LEFT JOIN users u2 ON (r.type = 'user' AND r.reported_id = u2.id)
-       LEFT JOIN recipes rc ON (r.type = 'recipe' AND r.reported_id = rc.id)
-       LEFT JOIN comments c ON (r.type = 'comment' AND r.reported_id = c.id)
-       WHERE 1=1
+      SELECT r.id, r.reported_id, r.reporter_id, r.type, r.reason, 
+             r.description, r.status, r.resource_title, r.recipe_id, 
+             r.admin_id, r.admin_response, r.created_at, r.updated_at,
+             u1.name as reporter_name
+      FROM reports r
+      INNER JOIN users u1 ON r.reporter_id = u1.id
+      WHERE 1=1
     `;
     
     const queryParams = [];
@@ -62,7 +59,7 @@ exports.getReports = async (req, res) => {
     
     // Sắp xếp và phân trang
     query += ' ORDER BY r.created_at DESC LIMIT ? OFFSET ?';
-    queryParams.push(parseInt(limit), parseInt(offset));
+    queryParams.push(parseInt(limit), offset); // offset đã được định nghĩa ở trên
     
     const [reports] = await connection.query(query, queryParams);
     
@@ -79,7 +76,7 @@ exports.getReports = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting reports:', error);
+    console.error('Detailed error in getReports:', error);
     if (connection) connection.release();
     
     res.status(500).json({
@@ -91,27 +88,20 @@ exports.getReports = async (req, res) => {
 };
 
 // Lấy chi tiết báo cáo (dành cho admin)
-exports.getReportDetail = async (req, res) => {
+exports.getReport = async (req, res) => {
   let connection;
   try {
     const { id } = req.params;
     
     connection = await pool.getConnection();
     
+    // Lấy thông tin báo cáo cơ bản
     const [reports] = await connection.query(
       `SELECT r.*, 
-             u1.name as reporter_name,
-             u1.email as reporter_email,
-             CASE 
-               WHEN r.type = 'user' THEN u2.name 
-               WHEN r.type = 'recipe' THEN rc.title 
-               WHEN r.type = 'comment' THEN c.text
-             END as resource_title
+              reporter.name as reporter_name,
+              reporter.email as reporter_email
        FROM reports r
-       INNER JOIN users u1 ON r.reporter_id = u1.id
-       LEFT JOIN users u2 ON (r.type = 'user' AND r.reported_id = u2.id)
-       LEFT JOIN recipes rc ON (r.type = 'recipe' AND r.reported_id = rc.id)
-       LEFT JOIN comments c ON (r.type = 'comment' AND r.reported_id = c.id)
+       JOIN users reporter ON r.reporter_id = reporter.id
        WHERE r.id = ?`,
       [id]
     );
@@ -124,11 +114,65 @@ exports.getReportDetail = async (req, res) => {
       });
     }
     
+    const report = reports[0];
+    
+    // Bổ sung thông tin dựa trên loại báo cáo
+    switch(report.type) {
+      case 'user':
+        // Thêm thông tin người dùng bị báo cáo
+        const [reportedUsers] = await connection.query(
+          'SELECT name as reported_user_name, email as reported_user_email FROM users WHERE id = ?',
+          [report.reported_id]
+        );
+        
+        if (reportedUsers.length > 0) {
+          Object.assign(report, reportedUsers[0]);
+        }
+        break;
+        
+      case 'comment':
+        // Thêm thông tin comment và người viết comment
+        const [commentInfo] = await connection.query(
+          `SELECT c.text as comment_text, 
+                  c.user_id as comment_author_id,
+                  u.name as comment_author_name,
+                  c.recipe_id,
+                  r.title as recipe_title
+           FROM comments c
+           JOIN users u ON c.user_id = u.id
+           JOIN recipes r ON c.recipe_id = r.id
+           WHERE c.id = ?`,
+          [report.reported_id]
+        );
+        
+        if (commentInfo.length > 0) {
+          Object.assign(report, commentInfo[0]);
+        }
+        break;
+        
+      case 'recipe':
+        // Thêm thông tin recipe và người đăng recipe
+        const [recipeInfo] = await connection.query(
+          `SELECT r.title as recipe_title,
+                  r.author_id as recipe_author_id,
+                  u.name as recipe_author_name
+           FROM recipes r
+           JOIN users u ON r.author_id = u.id
+           WHERE r.id = ?`,
+          [report.reported_id]
+        );
+        
+        if (recipeInfo.length > 0) {
+          Object.assign(report, recipeInfo[0]);
+        }
+        break;
+    }
+    
     connection.release();
     
     res.status(200).json({
       success: true,
-      data: reports[0]
+      data: report
     });
   } catch (error) {
     console.error('Error getting report details:', error);
@@ -234,9 +278,9 @@ exports.respondToReport = async (req, res) => {
     
     // Tạo thông báo cho người báo cáo
     await connection.query(
-      `INSERT INTO notifications (user_id, type, title, content, related_id, sender_id, created_at)
-       VALUES (?, 'report_response', 'Phản hồi báo cáo của bạn', ?, ?, ?, NOW())`,
-      [report.reporter_id, response, id, adminId]
+      `INSERT INTO notifications (recipient_id, type, content, sender_id, created_at)
+       VALUES (?, 'moderation', ?, ?, NOW())`,
+      [report.reporter_id, response, adminId]
     );
     
     connection.release();

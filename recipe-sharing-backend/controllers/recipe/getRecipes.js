@@ -68,48 +68,57 @@ exports.getUserRecipes = async (req, res) => {
   
   try {
     const userId = req.params.userId;
-    const { status, sort } = req.query; // Lấy cả status và sort từ query params
+    const { status, sort } = req.query;
     
-    console.log("Fetching recipes for user:", userId, "with status:", status || "all", "sort:", sort || "default");
-    
-    // Kiểm tra userId
-    if (!userId || userId === 'undefined') {
-      console.error("Invalid userId:", userId);
-      return res.status(400).json({
-        success: false,
-        message: 'Cần cung cấp ID người dùng hợp lệ'
-      });
-    }
+    console.log("Fetching recipes for user:", userId, "with status:", status || "all");
     
     connection = await pool.getConnection();
     
-    let query = `
-      SELECT r.*, 
-             u.name as author_name, 
-             u.picture as author_picture,
-             COUNT(DISTINCT lr.id) as likes_count,
-             COUNT(DISTINCT sr.id) as saves_count
-       FROM recipes r
-       LEFT JOIN users u ON r.author_id = u.id
-       LEFT JOIN liked_recipes lr ON r.id = lr.recipe_id
-       LEFT JOIN saved_recipes sr ON r.id = sr.recipe_id
-       WHERE r.author_id = ? AND r.is_deleted = 0
-    `;
+    let query = `SELECT r.*, u.name as author_name, u.picture as author_picture`;
     
-    // Thêm điều kiện lọc theo status nếu có
-    if (status) {
-      query += ` AND r.status = ?`;
+    // Nếu cần thêm các trường khác
+    if (status !== 'trash') {
+      query += `, COUNT(DISTINCT lr.id) as likes_count, COUNT(DISTINCT sr.id) as saves_count`;
     }
     
-    query += ` GROUP BY r.id`;
+    query += ` FROM recipes r JOIN users u ON r.author_id = u.id`;
     
-    // Sắp xếp theo ngày tạo mặc định là giảm dần (mới nhất lên đầu)
-    query += ` ORDER BY r.created_at DESC`;
+    // Thêm LEFT JOIN nếu không phải trạng thái trash
+    if (status !== 'trash') {
+      query += ` LEFT JOIN liked_recipes lr ON r.id = lr.recipe_id
+                LEFT JOIN saved_recipes sr ON r.id = sr.recipe_id`;
+    }
     
-    // Thực thi truy vấn với hoặc không có tham số status
-    const [recipes] = status 
-      ? await connection.query(query, [userId, status])
-      : await connection.query(query, [userId]);
+    // XỬ LÝ TRẠNG THÁI TRASH - QUAN TRỌNG NHẤT
+    if (status === 'trash') {
+      query += ` WHERE r.author_id = ? AND r.is_deleted = 1`;
+    } else {
+      query += ` WHERE r.author_id = ? AND r.is_deleted = 0`;
+      
+      // Xử lý các trạng thái khác
+      if (status && status !== 'all') {
+        query += ` AND r.status = ?`;
+      }
+      
+      // Nhóm theo ID nếu có count
+      query += ` GROUP BY r.id`;
+    }
+    
+    // Sắp xếp theo thời gian
+    if (status === 'trash') {
+      query += ` ORDER BY r.deleted_at DESC`;
+    } else {
+      query += ` ORDER BY r.created_at DESC`;
+    }
+    
+    // SỬA Ở ĐÂY: Sử dụng mảng tham số phù hợp với truy vấn
+    let params = [userId];
+    if (status && status !== 'all' && status !== 'trash') {
+      params.push(status);
+    }
+    
+    // Thực thi query với đúng số lượng tham số
+    const [recipes] = await connection.query(query, params);
     
     connection.release();
     
@@ -119,13 +128,12 @@ exports.getUserRecipes = async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting user recipes:', error);
+    if (connection) connection.release();
     res.status(500).json({ 
       success: false, 
-      message: 'Lỗi khi lấy danh sách công thức của người dùng', 
+      message: 'Lỗi khi lấy danh sách công thức', 
       error: error.message 
     });
-    
-    if (connection) connection.release();
   }
 };
 

@@ -5,6 +5,7 @@ const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { pool } = require('../config/db');
 const { avatarUpload } = require('../middleware/upload');
+const { checkAccountStatus } = require('../middleware/checkAccountStatus');
 
 // @route   GET /api/users/:id
 // @desc    Get user profile
@@ -14,12 +15,12 @@ router.get('/:id', userController.getUserProfile);
 // @route   PUT /api/users/profile
 // @desc    Update user profile
 // @access  Private
-router.put('/profile', protect, userController.updateProfile);
+router.put('/profile', protect, checkAccountStatus, userController.updateProfile);
 
 // @route   POST /api/users/upload-avatar
 // @desc    Upload user avatar
 // @access  Private
-router.post('/upload-avatar', protect, avatarUpload, userController.uploadAvatar);
+router.post('/upload-avatar', protect, checkAccountStatus, avatarUpload, userController.uploadAvatar);
 
 // API lấy trạng thái theo dõi
 router.get('/:id/follow-status', protect, async (req, res) => {
@@ -46,7 +47,7 @@ router.get('/:id/follow-status', protect, async (req, res) => {
 });
 
 // API theo dõi người dùng
-router.post('/:id/follow', protect, async (req, res) => {
+router.post('/:id/follow', protect, checkAccountStatus, async (req, res) => {
   try {
     const userId = req.user.id;
     const targetId = req.params.id;
@@ -84,7 +85,7 @@ router.post('/:id/follow', protect, async (req, res) => {
 });
 
 // API hủy theo dõi
-router.post('/:id/unfollow', protect, async (req, res) => {
+router.post('/:id/unfollow', protect, checkAccountStatus, async (req, res) => {
   try {
     const userId = req.user.id;
     const targetId = req.params.id;
@@ -113,27 +114,53 @@ router.get('/:userId/recipes', protect, async (req, res) => {
   try {
     const userId = req.params.userId;
     const status = req.query.status || 'published';
-
+    
     const connection = await pool.getConnection();
-    const [recipes] = await connection.query(
-      `SELECT r.*, u.name as author_name, u.picture as author_picture
-       FROM recipes r
-       JOIN users u ON r.author_id = u.id
-       WHERE r.author_id = ? AND r.status = ? AND r.is_deleted = 0
-       ORDER BY r.created_at DESC`,
-      [userId, status]
-    );
+    
+    // Xử lý trường hợp status=trash riêng biệt
+    let query, params;
+    
+    if (status === 'trash') {
+      // Trường hợp thùng rác - lấy công thức đã bị xóa
+      query = `
+        SELECT r.*, u.name as author_name, u.picture as author_picture 
+        FROM recipes r
+        JOIN users u ON r.author_id = u.id
+        WHERE r.author_id = ? AND r.is_deleted = 1 
+        ORDER BY r.deleted_at DESC
+      `;
+      params = [userId];
+    } else {
+      // Các trường hợp khác - lấy công thức chưa bị xóa
+      query = `
+        SELECT r.*, u.name as author_name, u.picture as author_picture 
+        FROM recipes r
+        JOIN users u ON r.author_id = u.id
+        WHERE r.author_id = ? AND r.is_deleted = 0
+      `;
+      params = [userId];
+      
+      if (status && status !== 'all') {
+        query += ` AND r.status = ?`;
+        params.push(status);
+      }
+      
+      query += ` ORDER BY r.created_at DESC`;
+    }
+    
+    const [recipes] = await connection.query(query, params);
     connection.release();
-
+    
     res.json({
       success: true,
       data: recipes
     });
   } catch (error) {
-    console.error('Error fetching user recipes:', error);
+    console.error('Error getting user recipes:', error);
+    if (connection) connection.release();
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi lấy danh sách công thức của người dùng',
+      message: 'Lỗi khi lấy danh sách công thức',
       error: error.message
     });
   }

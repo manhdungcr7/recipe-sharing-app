@@ -1,86 +1,117 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 import './LoginPage.css';
 
 const LoginPage = () => {
+    const { login } = useContext(AuthContext);
     const navigate = useNavigate();
-    const { isAuthenticated, login } = useContext(AuthContext);
-    const [error, setError] = useState(null);
+    const location = useLocation();
+    const [error, setError] = useState(location.state?.error || '');
     const [loading, setLoading] = useState(false);
-    
+
     useEffect(() => {
-        // Nếu đã đăng nhập, chuyển hướng đến dashboard
-        if (isAuthenticated) {
-            navigate('/dashboard');
+        // Kiểm tra xem có đến từ logout không
+        const fromLogout = new URLSearchParams(window.location.search).get('from') === 'logout';
+        
+        // Nếu đến từ logout, đảm bảo localStorage đã được xóa
+        if (fromLogout) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            return;
         }
-    }, [isAuthenticated, navigate]);
+        
+        const checkToken = async () => {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;
+            
+            try {
+                // Thêm timeout để tránh treo
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch('http://localhost:5000/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        // Token hợp lệ và có data, lưu vào context và chuyển hướng
+                        localStorage.setItem('user', JSON.stringify(data.data));
+                        login(data.data, token);
+                        navigate('/dashboard');
+                    } else {
+                        // API trả về thành công nhưng không có data
+                        clearAuth();
+                    }
+                } else {
+                    // Token không hợp lệ, xóa localStorage
+                    clearAuth();
+                }
+            } catch (err) {
+                console.error("Auth check error:", err);
+                clearAuth();
+            }
+        };
+        
+        // Hàm xóa tất cả dữ liệu xác thực
+        const clearAuth = () => {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        };
+        
+        checkToken();
+    }, [navigate, login]);
 
     // Xử lý đăng nhập Google thành công
-    const handleGoogleLoginSuccess = async (credentialResponse) => {
+    const handleGoogleLoginSuccess = async (response) => {
+        setLoading(true);
         try {
-            setLoading(true);
-            setError(null);
-            
-            console.log("Google OAuth response:", credentialResponse);
-            const { credential } = credentialResponse;
-            
-            const response = await fetch('http://localhost:5000/api/auth/google', {
+            const result = await fetch('http://localhost:5000/api/auth/google', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ tokenId: credential })
+                // Thay đổi tên trường token thành tokenId để khớp với backend
+                body: JSON.stringify({ tokenId: response.credential })
             });
             
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Google login API error:", errorText);
-                throw new Error(`Đăng nhập thất bại: ${response.status}`);
-            }
-            
-            const data = await response.json();
+            const data = await result.json();
             
             if (data.success) {
-                // Lưu token và thông tin người dùng vào localStorage
-                localStorage.setItem('token', data.token);
-                
-                // Kiểm tra dữ liệu người dùng
-                if (data.user && typeof data.user === 'object') {
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    console.log("Login successful with:", { 
-                        token: data.token.substring(0, 15) + "...", 
-                        user: data.user 
-                    });
-                    
-                    // Cập nhật trạng thái đăng nhập
-                    login(data.token, data.user);
-                    
-                    // Kiểm tra dữ liệu đã lưu
-                    const savedToken = localStorage.getItem('token');
-                    const savedUser = localStorage.getItem('user');
-                    
-                    console.log("Saved in localStorage:", { 
-                        token: savedToken ? "Present" : "Missing", 
-                        user: savedUser ? "Present" : "Missing" 
-                    });
-                    
-                    // Chuyển hướng người dùng
-                    setTimeout(() => {
-                        navigate('/dashboard');
-                    }, 500);
-                } else {
-                    console.error("Invalid user data received:", data.user);
-                    throw new Error("Dữ liệu người dùng không hợp lệ");
+                // QUAN TRỌNG: Kiểm tra thông tin người dùng hiện tại trong localStorage
+                const existingUserString = localStorage.getItem('user');
+                if (existingUserString) {
+                    try {
+                        const existingUser = JSON.parse(existingUserString);
+                        // Nếu cùng ID và tên khác nhau, giữ lại tên đã chỉnh sửa
+                        if (existingUser.id === data.user.id && existingUser.name !== data.user.name) {
+                            console.log("Preserving existing name:", existingUser.name);
+                            data.user.name = existingUser.name;
+                        }
+                    } catch (error) {
+                        console.error("Error parsing existing user:", error);
+                    }
                 }
+                
+                // Lưu token và thông tin đã cập nhật
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                login(data.user, data.token);
+                navigate('/dashboard');
             } else {
-                throw new Error(data.message || 'Đăng nhập thất bại');
+                setError(data.message || 'Đăng nhập thất bại');
             }
         } catch (error) {
-            console.error("Google login error:", error);
-            setError(error.message || 'Đăng nhập thất bại, vui lòng thử lại');
+            console.error('Google login error:', error);
+            setError('Có lỗi xảy ra khi đăng nhập');
         } finally {
             setLoading(false);
         }
@@ -95,81 +126,73 @@ const LoginPage = () => {
     return (
         <div className="login-page">
             <div className="login-container">
-                <div className="login-header">
-                    <h1>Đăng nhập</h1>
-                    <p>Đăng nhập bằng tài khoản Google của bạn để tiếp tục</p>
-                </div>
-                
-                {error && (
-                    <div className="error-message">
-                        <i className="fas fa-exclamation-circle"></i>
-                        {error}
-                    </div>
-                )}
-                
-                <div className="google-login-wrapper">
-                    {loading ? (
-                        <div className="loading-spinner">
-                            <div className="spinner"></div>
-                            <p>Đang đăng nhập...</p>
+                <div className="login-left">
+                    <div className="login-content">
+                        <div className="logo-container">
+                            <i className="fas fa-utensils"></i>
+                            <h1>Recipe Sharing</h1>
                         </div>
-                    ) : (
-                        <GoogleLogin
-                            onSuccess={handleGoogleLoginSuccess}
-                            onError={handleGoogleLoginError}
-                            useOneTap
-                            theme="filled_blue"
-                            shape="rectangular"
-                            text="signin_with"
-                            locale="vi"
-                            width="300px"
-                        />
-                    )}
+                        
+                        <h2>Đăng nhập</h2>
+                        <p className="login-description">
+                            Khám phá và chia sẻ công thức nấu ăn tuyệt vời với cộng đồng đam mê ẩm thực
+                        </p>
+                        
+                        {error && (
+                            <div className="error-message">
+                                <i className="fas fa-exclamation-circle"></i>
+                                {error}
+                            </div>
+                        )}
+                        
+                        <div className="google-login-wrapper">
+                            {loading ? (
+                                <div className="loading-spinner">
+                                    <div className="spinner"></div>
+                                    <p>Đang đăng nhập...</p>
+                                </div>
+                            ) : (
+                                <GoogleLogin
+                                    onSuccess={handleGoogleLoginSuccess}
+                                    onError={handleGoogleLoginError}
+                                    useOneTap
+                                    theme="filled_blue"
+                                    shape="rectangular"
+                                    text="signin_with"
+                                    locale="vi"
+                                    width="100%"
+                                />
+                            )}
+                        </div>
+                        
+                        <div className="login-info">
+                            <div className="info-item">
+                                <i className="fas fa-lock"></i>
+                                <p>Đăng nhập an toàn với tài khoản Google</p>
+                            </div>
+                            <div className="info-item">
+                                <i className="fas fa-users"></i>
+                                <p>Tham gia cộng đồng ẩm thực đông đảo</p>
+                            </div>
+                        </div>
+                        
+                        <div className="login-footer">
+                            <Link to="/" className="back-home">
+                                <i className="fas fa-arrow-left"></i> Quay lại trang chủ
+                            </Link>
+                        </div>
+                    </div>
                 </div>
                 
-                <div className="login-info">
-                    <div className="info-item">
-                        <i className="fas fa-lock"></i>
-                        <p>Đăng nhập an toàn với tài khoản Google</p>
-                    </div>
-                    <div className="info-item">
-                        <i className="fas fa-shield-alt"></i>
-                        <p>Chúng tôi không lưu mật khẩu của bạn</p>
+                <div className="login-right">
+                    <div className="food-images">
+                        <div className="background-overlay"></div>
+                        <div className="login-quote">
+                            <h2 style={{ color: 'rgb(221, 240, 168)' }}>"Ẩm thực là nghệ thuật duy nhất nuôi dưỡng mọi giác quan."</h2>
+                            <p>Chia sẻ niềm đam mê ẩm thực của bạn với cộng đồng ngay hôm nay</p>
+                        </div>
                     </div>
                 </div>
-                
-                <div className="login-footer">
-                    <p>Bằng việc đăng nhập, bạn đồng ý với <Link to="/terms">Điều khoản sử dụng</Link> và <Link to="/privacy">Chính sách bảo mật</Link> của chúng tôi</p>
-                    <Link to="/home" className="back-home">Quay lại trang chủ</Link>
-                </div>
-                
-                {/* Debug tools - chỉ hiển thị trong development */}
-                {process.env.NODE_ENV !== 'production' && (
-                    <div className="debug-tools" style={{marginTop: "20px"}}>
-                        <button 
-                            type="button" 
-                            onClick={() => {
-                                const token = localStorage.getItem('token');
-                                const user = localStorage.getItem('user');
-                                alert(`Token: ${token ? token.substring(0, 15) + '...' : 'Không có'}\nUser: ${user || 'Không có'}`);
-                            }}
-                        >
-                            Kiểm tra localStorage
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                localStorage.removeItem('token');
-                                localStorage.removeItem('user');
-                                localStorage.removeItem('auth_token');
-                                alert('Đã xóa tất cả token và thông tin người dùng');
-                                window.location.reload();
-                            }}
-                        >
-                            Xóa tất cả token
-                        </button>
-                    </div>
-                )}
             </div>
         </div>
     );

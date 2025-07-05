@@ -22,6 +22,11 @@ exports.getUserProfile = async (req, res) => {
     
     const user = users[0];
     
+    // Đảm bảo trường picture luôn bắt đầu bằng dấu /
+    if (user.picture && !user.picture.startsWith('http') && !user.picture.startsWith('/')) {
+      user.picture = '/' + user.picture;
+    }
+    
     // Get follower and following counts
     const [followerResult] = await pool.query(
       'SELECT COUNT(*) as count FROM follows WHERE followed_id = ?',
@@ -54,7 +59,7 @@ exports.getUserProfile = async (req, res) => {
     // Get user's published recipes
     const [recipes] = await pool.query(
       `SELECT id, title, image_url, cooking_time, created_at,
-              (SELECT COUNT(*) FROM likes WHERE recipe_id = recipes.id) as like_count,
+              (SELECT COUNT(*) FROM liked_recipes WHERE recipe_id = recipes.id) as like_count,
               (SELECT COUNT(*) FROM comments WHERE recipe_id = recipes.id AND is_deleted = FALSE) as comment_count
        FROM recipes
        WHERE author_id = ? AND status = 'published' AND is_deleted = FALSE
@@ -256,17 +261,27 @@ exports.uploadAvatar = async (req, res) => {
 // @route   GET /api/users/:userId/recipes
 // @access  Public
 exports.getUserRecipes = async (req, res) => {
-  const userId = req.params.id;
-  const status = req.query.status; // 'published', 'draft', ...
+  const userId = req.params.userId;
+  const status = req.query.status || 'published';
   const connection = await pool.getConnection();
   try {
-    let query = 'SELECT * FROM recipes WHERE author_id = ? AND is_deleted = 0';
-    let params = [userId];
-    if (status) {
-      query += ' AND status = ?';
-      params.push(status);
+    let query, params;
+    
+    if (status === 'trash') {
+      // Khi status=trash, lấy các công thức đã bị xóa (is_deleted = 1)
+      query = 'SELECT * FROM recipes WHERE author_id = ? AND is_deleted = 1 ORDER BY deleted_at DESC';
+      params = [userId];
+    } else {
+      // Các trường hợp khác, lấy công thức chưa bị xóa (is_deleted = 0)
+      query = 'SELECT * FROM recipes WHERE author_id = ? AND is_deleted = 0';
+      params = [userId];
+      if (status && status !== 'all') {
+        query += ' AND status = ?';
+        params.push(status);
+      }
+      query += ' ORDER BY created_at DESC';
     }
-    query += ' ORDER BY created_at DESC';
+    
     const [recipes] = await connection.query(query, params);
     connection.release();
     res.json({ success: true, data: recipes });

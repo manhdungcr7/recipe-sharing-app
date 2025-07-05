@@ -1,32 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-const recipeController = require('../controllers/recipe');
-const { recipeMultiUpload } = require('../middleware/upload');
-const { restoreRecipe } = require('../controllers/recipe/restoreRecipe');
-const { permanentDeleteRecipe } = require('../controllers/recipe/permanentDeleteRecipe');
+const { protect, checkAccountStatus } = require('../middleware/auth');
+const { recipeUpload, recipeMultiUpload } = require('../middleware/upload');
+const recipeController = require('../controllers/recipeController');
+const interactionController = require('../controllers/recipe/interactionRecipe');
 
-console.log('recipeRoutes loaded');
-
-// QUAN TRỌNG: Routes cụ thể (/drafts, /saved) phải đặt TRƯỚC routes với params /:id
-// Nếu không routes cụ thể sẽ không bao giờ được khớp
-
-// Lấy danh sách bản nháp của người dùng hiện tại
-router.get('/drafts', protect, recipeController.getDraftRecipes);
+// ĐẢM BẢO CÁC ROUTES CỤ THỂ ĐƯỢC ĐẶT TRƯỚC
+// ===== Đặt các route đặc biệt lên trước =====
+router.get('/drafts', protect, recipeController.getDrafts);
+router.get('/draft/:id', protect, recipeController.getDraftById);
+router.get('/saved', protect, recipeController.getSavedRecipes);
+router.get('/trash', protect, recipeController.getTrashedRecipes);
 
 // Lưu bản nháp công thức mới
-router.post('/draft', protect, (req, res, next) => {
+router.post('/draft', protect, checkAccountStatus, (req, res, next) => {
   recipeMultiUpload(req, res, (err) => {
     if (err) return res.status(400).json({ success: false, message: err.message });
     next();
   });
 }, recipeController.saveDraft);
 
-// Lấy chi tiết bản nháp theo ID
-router.get('/draft/:id', protect, recipeController.getDraftById);
-
 // Cập nhật bản nháp
-router.put('/draft/:id', protect, (req, res, next) => {
+router.put('/draft/:id', protect, checkAccountStatus, (req, res, next) => {
   recipeMultiUpload(req, res, (err) => {
     if (err) return res.status(400).json({ success: false, message: err.message });
     next();
@@ -37,18 +32,10 @@ router.put('/draft/:id', protect, (req, res, next) => {
 router.delete('/draft/:id', protect, recipeController.deleteDraft);
 
 // Chuyển bản nháp thành công thức chính thức
-router.post('/draft/:id/publish', protect, recipeController.publishDraft);
-
-// Lấy công thức đã lưu của người dùng hiện tại
-router.get('/saved', protect, recipeController.getSavedRecipes);
-
-// Lấy danh sách công thức đã xóa của người dùng hiện tại
-router.get('/trash', protect, recipeController.getTrashedRecipes);
-
-// Còn lại các routes thông thường
+router.post('/draft/:id/publish', protect, checkAccountStatus, recipeController.publishDraft);
 
 // Tạo công thức mới - sử dụng multiupload
-router.post('/', protect, (req, res, next) => {
+router.post('/', protect, checkAccountStatus, (req, res, next) => {
   console.log("POST /api/recipes - User:", req.user?.id || "Not authenticated");
   recipeMultiUpload(req, res, (err) => {
     if (err) {
@@ -62,58 +49,8 @@ router.post('/', protect, (req, res, next) => {
 // GET lấy tất cả công thức (với phân trang)
 router.get('/', recipeController.getRecipes);
 
-// Lấy tất cả công thức của một người dùng
-// router.get('/user/:userId', async (req, res) => {
-//   try {
-//     const userId = req.params.userId;
-    
-//     if (!userId || userId === 'undefined') {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Cần cung cấp ID người dùng hợp lệ'
-//       });
-//     }
-    
-//     const connection = await require('../config/db').pool.getConnection();
-    
-//     // Lấy công thức của người dùng đã đăng
-//     const [recipes] = await connection.query(
-//       `SELECT r.*, 
-//               u.name as author_name, u.picture as author_picture,
-//               (SELECT COUNT(*) FROM likes WHERE recipe_id = r.id) as likes_count,
-//               (SELECT COUNT(*) FROM saves WHERE recipe_id = r.id) as saves_count,
-//               (SELECT COUNT(*) FROM comments WHERE recipe_id = r.id AND is_deleted = 0) as comments_count
-//        FROM recipes r
-//        LEFT JOIN users u ON r.author_id = u.id
-//        WHERE r.author_id = ? AND r.status = 'published' AND r.is_deleted = 0
-//        GROUP BY r.id
-//        ORDER BY r.created_at DESC`, 
-//       [userId]
-//     );
-    
-//     connection.release();
-    
-//     res.json({
-//       success: true,
-//       data: recipes
-//     });
-//   } catch (error) {
-//     console.error('Error getting user recipes:', error);
-//     res.status(500).json({ 
-//       success: false, 
-//       message: 'Lỗi khi lấy danh sách công thức của người dùng', 
-//       error: error.message 
-//     });
-    
-//     if (connection) connection.release();
-//   }
-// });
-
-// GET lấy công thức theo ID
-router.get('/:id', recipeController.getRecipeById);
-
 // Cập nhật công thức
-router.put('/:id', protect, (req, res, next) => {
+router.put('/:id', protect, checkAccountStatus, (req, res, next) => {
   recipeMultiUpload(req, res, (err) => {
     if (err) return res.status(400).json({ success: false, message: err.message });
     next();
@@ -123,22 +60,90 @@ router.put('/:id', protect, (req, res, next) => {
 // Xóa công thức
 router.delete('/:id', protect, recipeController.deleteRecipe);
 
-// Thích công thức
-router.post('/:id/like', protect, recipeController.likeRecipe);
+// Route cho thích công thức
+router.post('/:id/like', protect, async (req, res) => {
+    try {
+        // Gọi hàm controller
+        await interactionController.likeRecipe(req, res);
+    } catch (error) {
+        console.error("Error in like route:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi thích công thức',
+            error: error.message
+        });
+    }
+});
 
-// Lưu công thức
-router.post('/:id/save', protect, recipeController.saveRecipe);
+// Route cho lưu công thức
+router.post('/:id/save', protect, async (req, res) => {
+    try {
+        // Gọi hàm controller
+        await interactionController.saveRecipe(req, res);
+    } catch (error) {
+        console.error("Error in save route:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi lưu công thức',
+            error: error.message
+        });
+    }
+});
 
-// Bỏ lưu công thức
-router.delete('/:id/save', protect, recipeController.unsaveRecipe);
+router.delete('/:id/save', protect, async (req, res) => {
+    try {
+        await interactionController.unsaveRecipe(req, res);
+    } catch (error) {
+        console.error("Error in unsave route:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi bỏ lưu công thức',
+            error: error.message
+        });
+    }
+});
 
-// Xuất công thức ra PDF
-router.get('/:id/pdf', recipeController.exportRecipePDF);
+// Route cho chia sẻ công thức
+router.post('/:id/share', protect, async (req, res) => {
+    try {
+        // Gọi hàm controller
+        await interactionController.shareRecipe(req, res);
+    } catch (error) {
+        console.error("Error in share route:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi chia sẻ công thức',
+            error: error.message
+        });
+    }
+});
+
+// Route cho xuất PDF
+router.get('/:id/pdf', async (req, res) => {
+    try {
+        // Gọi hàm controller
+        await interactionController.exportRecipeToPDF(req, res);
+    } catch (error) {
+        console.error("Error in PDF export route:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi xuất PDF',
+            error: error.message
+        });
+    }
+});
 
 // Khôi phục công thức từ thùng rác
 router.put('/:id/restore', protect, restoreRecipe);
 
 // Xóa vĩnh viễn công thức
 router.delete('/:id/permanent', protect, permanentDeleteRecipe);
+
+// Thêm comment cho công thức
+// router.post('/:id/comments', protect, checkAccountStatus, commentController.addComment);
+
+// ===== ROUTE ĐỘNG CUỐI CÙNG =====
+// Đặt xuống cuối cùng để tránh bắt các routes khác
+router.get('/:id', recipeController.getRecipeById);
 
 module.exports = router;

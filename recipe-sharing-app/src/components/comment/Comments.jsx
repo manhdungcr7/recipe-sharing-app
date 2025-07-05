@@ -157,13 +157,9 @@ const Comments = ({ recipeId }) => {
   }
 
   const CommentItem = ({ comment, handleReply, replyingTo, handleSubmitReply, handleCancelReply, currentUser }) => {
-    // Mỗi component có state riêng
     const [localReplyText, setLocalReplyText] = useState('');
-    
-    // Khi component được chọn để reply
     const isReplying = replyingTo === comment.id;
     
-    // Reset text khi reply form mới mở
     useEffect(() => {
       if (isReplying) setLocalReplyText('');
     }, [isReplying]);
@@ -190,15 +186,6 @@ const Comments = ({ recipeId }) => {
           <div className="comment-header">
             <div className="comment-author">{comment.user_name}</div>
             <div className="comment-date">{formatDate(comment.created_at)}</div>
-            
-            {/* Thêm nút báo cáo chỉ hiển thị khi không phải comment của mình */}
-            {currentUser && currentUser.id !== comment.user_id && (
-              <ReportButton 
-                type="comment" 
-                id={comment.id} 
-                title={`Comment by ${comment.user_name}`} 
-              />
-            )}
           </div>
           
           <div className="comment-text">
@@ -213,12 +200,12 @@ const Comments = ({ recipeId }) => {
               Trả lời
             </button>
             
-            {/* Thêm chức năng báo cáo comment nếu không phải người viết comment */}
+            {/* Luôn hiển thị nút Report nếu người dùng đã đăng nhập và đây không phải comment của họ */}
             {currentUser && currentUser.id !== comment.user_id && (
               <ReportButton 
-                  type="comment" 
-                  id={comment.id} 
-                  title={`Comment by ${comment.user_name}`} 
+                type="comment" 
+                targetId={comment.id}
+                targetName={`Bình luận của ${comment.user_name}`}
               />
             )}
           </div>
@@ -242,7 +229,7 @@ const Comments = ({ recipeId }) => {
                 <button 
                   className="submit-reply-btn"
                   onClick={(e) => {
-                    e.preventDefault(); // Thêm dòng này
+                    e.preventDefault();
                     handleSubmitReply(comment.id, localReplyText);
                   }}
                   disabled={!localReplyText.trim()}
@@ -253,7 +240,7 @@ const Comments = ({ recipeId }) => {
             </div>
           )}
           
-          {/* Đệ quy render replies */}
+          {/* Hiển thị replies đệ quy */}
           {comment.replies && comment.replies.length > 0 && (
             <div className="replies-container">
               {comment.replies.map(reply => (

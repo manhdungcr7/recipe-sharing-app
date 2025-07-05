@@ -11,7 +11,7 @@ const AdminRecipesPage = () => {
     const fetchRecipes = async () => {
       try {
         setLoading(true);
-        
+
         // Lấy token từ localStorage
         const token = localStorage.getItem('auth_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};

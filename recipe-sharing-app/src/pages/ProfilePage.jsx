@@ -3,9 +3,11 @@ import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import './ProfilePage.css';
 import ProfileLayout from './ProfileLayout';
+import ReportButton from '../components/report/ReportButton';
+import { getAvatarUrl } from '../utils/imageUtils';
 
 const ProfilePage = () => {
-    const { currentUser } = useContext(AuthContext);
+    const { currentUser, setCurrentUser } = useContext(AuthContext);
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     
@@ -49,6 +51,39 @@ const ProfilePage = () => {
         console.log("Edit profile clicked");
     };
     
+    // Hàm xử lý upload avatar (thêm vào)
+    const handleAvatarUpload = async (file) => {
+        try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch('http://localhost:5000/api/users/upload-avatar', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Cập nhật avatar trong context và localStorage
+                const userData = JSON.parse(localStorage.getItem('user'));
+                userData.picture = data.data.picture;
+                localStorage.setItem('user', JSON.stringify(userData));
+                
+                // Cập nhật state nếu cần
+                if (setCurrentUser) {
+                    setCurrentUser({...currentUser, picture: data.data.picture});
+                }
+            }
+        } catch (error) {
+            console.error("Error uploading avatar:", error);
+        }
+    };
+    
     // UI hiển thị theo userData
     return (
         <div className="profile-page">
@@ -57,16 +92,19 @@ const ProfilePage = () => {
             ) : userData ? (
                 <>
                     <ProfileLayout
-                        user={currentUser}
+                        user={userData}
                         isOwner={true}
                         onEditProfile={handleEditProfile}
+                        onAvatarUpload={handleAvatarUpload}
                     />
                     
                     {/* Thêm nút báo cáo người dùng */}
                     {currentUser && currentUser.id !== userId && (
-                        <Link to={`/report-user/${userId}`} className="report-user-button">
-                            <i className="fas fa-flag"></i> Báo cáo người dùng
-                        </Link>
+                        <ReportButton 
+                            type="user"
+                            targetId={userId}
+                            targetName={userData?.name || `Người dùng #${userId}`}
+                        />
                     )}
                 </>
             ) : (

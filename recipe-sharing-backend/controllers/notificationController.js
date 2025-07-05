@@ -1,19 +1,28 @@
 const { pool } = require('../config/db');
+const notificationController = require('./notificationController');
 
 // Hàm tạo thông báo (để sử dụng trong các controller khác)
-exports.createNotification = async (notificationData) => {
+exports.createNotification = async (notificationData, existingConnection = null) => {
   let connection;
+  let releaseConnection = true;
+  
   try {
     const {
-      recipient_id,
-      sender_id,
+      recipient_id,   // Không phải user_id
+      sender_id,      // Hoàn toàn thiếu!
       type,
       content,
-      related_recipe_id = null,
-      related_comment_id = null
+      related_recipe_id, // Không phải reference_id
+      related_comment_id
     } = notificationData;
 
-    connection = await pool.getConnection();
+    // Sử dụng kết nối được truyền vào hoặc tạo kết nối mới
+    if (existingConnection) {
+      connection = existingConnection;
+      releaseConnection = false;  // Không cần release vì không phải kết nối mới
+    } else {
+      connection = await pool.getConnection();
+    }
 
     await connection.query(
       `INSERT INTO notifications (recipient_id, sender_id, type, content, related_recipe_id, related_comment_id, is_read, created_at)
@@ -21,11 +30,13 @@ exports.createNotification = async (notificationData) => {
       [recipient_id, sender_id, type, content, related_recipe_id, related_comment_id]
     );
 
-    connection.release();
+    // Chỉ release nếu chúng ta đã tạo kết nối mới
+    if (releaseConnection) connection.release();
     return true;
   } catch (error) {
     console.error('Error creating notification:', error);
-    if (connection) connection.release();
+    // Chỉ release nếu chúng ta đã tạo kết nối mới
+    if (connection && releaseConnection) connection.release();
     throw error;
   }
 };
@@ -164,19 +175,11 @@ exports.replyToNotification = async (req, res) => {
   let connection;
   try {
     const { id } = req.params;
-    const { reply } = req.body;
+    const { reply } = req.body; // Sửa thành "message" nếu frontend gửi lên field "message"
     const userId = req.user.id;
     
-    if (!reply) {
-      return res.status(400).json({
-        success: false,
-        message: 'Nội dung phản hồi không được để trống'
-      });
-    }
-    
+    // Kiểm tra thông báo có tồn tại không và thuộc về người dùng không
     connection = await pool.getConnection();
-    
-    // Kiểm tra thông báo có tồn tại và thuộc về người dùng không
     const [notifications] = await connection.query(
       'SELECT * FROM notifications WHERE id = ? AND recipient_id = ?',
       [id, userId]
@@ -190,23 +193,26 @@ exports.replyToNotification = async (req, res) => {
       });
     }
     
-    // Cập nhật phản hồi
+    // Cập nhật phản hồi vào cơ sở dữ liệu
     await connection.query(
-      'UPDATE notifications SET user_reply = ?, replied_at = NOW() WHERE id = ?',
+      'UPDATE notifications SET response_content = ?, response_timestamp = NOW() WHERE id = ?',
       [reply, id]
     );
     
-    // Tạo thông báo cho admin
-    const [admins] = await connection.query('SELECT id FROM users WHERE role = "admin" LIMIT 1');
-    
-    if (admins.length > 0) {
-      await connection.query(
-        `INSERT INTO notifications 
-         (user_id, sender_id, type, title, content, reference_id, reference_type, created_at)
-         VALUES (?, ?, 'user_reply', 'Phản hồi từ người dùng', ?, ?, 'notification', NOW())`,
-        [admins[0].id, userId, reply, id]
-      );
-    }
+    // Gửi thông báo cho admin về phản hồi mới
+    const notification = notifications[0];
+    await connection.query(
+      `INSERT INTO notifications 
+       (recipient_id, sender_id, type, content, related_recipe_id, related_comment_id, is_read, created_at)
+       VALUES (?, ?, 'reply', ?, ?, ?, 0, NOW())`,
+      [
+        notification.sender_id,  // Gửi thông báo cho admin gốc
+        userId,                  // Người gửi phản hồi
+        `Phản hồi cho tin nhắn: ${notification.content.substring(0, 30)}...`,
+        notification.related_recipe_id,
+        notification.related_comment_id
+      ]
+    );
     
     connection.release();
     
@@ -219,7 +225,7 @@ exports.replyToNotification = async (req, res) => {
     if (connection) connection.release();
     
     res.status(500).json({
-      success: false,
+      success: false, 
       message: 'Lỗi khi gửi phản hồi',
       error: error.message
     });
@@ -233,7 +239,7 @@ exports.sendMessageToAdmin = async (req, res) => {
     const { message } = req.body;
     const userId = req.user.id;
     
-    if (!message) {
+    if (!message || !message.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Nội dung tin nhắn không được để trống'
@@ -242,7 +248,27 @@ exports.sendMessageToAdmin = async (req, res) => {
     
     connection = await pool.getConnection();
     
-    // Tìm admin để gửi thông báo
+    // Tìm ADMIN ĐANG ĐĂNG NHẬP thay vì admin đầu tiên
+    const [currentAdmin] = await connection.query('SELECT id FROM users WHERE id = ? AND role = "admin"', [12]);
+    
+    if (currentAdmin.length > 0) {
+      // Gửi tin nhắn cho admin đang đăng nhập
+      await connection.query(
+        `INSERT INTO notifications 
+         (recipient_id, sender_id, type, content, is_read, created_at)
+         VALUES (?, ?, 'admin_message', ?, 0, NOW())`,
+        [currentAdmin[0].id, userId, message]
+      );
+      
+      connection.release();
+      
+      return res.status(201).json({
+        success: true,
+        message: 'Đã gửi tin nhắn cho admin thành công'
+      });
+    }
+    
+    // Nếu không tìm thấy admin với ID=12, quay lại tìm admin đầu tiên
     const [admins] = await connection.query('SELECT id FROM users WHERE role = "admin" LIMIT 1');
     
     if (admins.length === 0) {
@@ -253,11 +279,11 @@ exports.sendMessageToAdmin = async (req, res) => {
       });
     }
     
-    // Tạo thông báo cho admin
+    // Tạo thông báo cho admin đầu tiên
     await connection.query(
       `INSERT INTO notifications 
-       (user_id, sender_id, type, title, content, created_at)
-       VALUES (?, ?, 'user_message', 'Tin nhắn từ người dùng', ?, NOW())`,
+       (recipient_id, sender_id, type, content, is_read, created_at)
+       VALUES (?, ?, 'admin_message', ?, 0, NOW())`,
       [admins[0].id, userId, message]
     );
     

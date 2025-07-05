@@ -1,53 +1,41 @@
-import React, { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import './AdminHeader.css';
 
-const AdminHeader = ({ toggleSidebar }) => {
-  const { currentUser, logout } = useContext(AuthContext);
-  const navigate = useNavigate();
-  
-  const handleLogout = () => {
-    logout();
-    
-    navigate('/login');
-  };
-
+const AdminHeader = ({ toggleSidebar, isExpanded }) => {
   return (
     <header className="admin-header">
-      <div className="admin-header-container">
-        {toggleSidebar && (
-          <button className="admin-mobile-menu-button" onClick={toggleSidebar}>
-            <i className="fas fa-bars"></i>
-          </button>
-        )}
+      <div className="admin-header-left">
+        <button 
+          className="header-toggle-btn" 
+          onClick={toggleSidebar}
+          title={isExpanded ? "Ẩn thanh bên" : "Hiện thanh bên"}
+        >
+          <i className={`fas ${isExpanded ? 'fa-times' : 'fa-bars'}`}></i>
+          {isExpanded ? "Đóng thanh bên" : "Hiện thanh bên"}
+        </button>
         
-        <div className="admin-logo">
-          <Link to="/admin">
-            <h1>Recipe Sharing <span>Admin</span></h1>
-          </Link>
-        </div>
+        <Link to="/admin/dashboard" className="admin-logo">
+          <i className="fas fa-utensils"></i>
+          <span>Recipe Sharing Admin</span>
+        </Link>
+      </div>
+      
+      <div className="admin-header-right">
+        <Link to="/" className="view-site-btn" target="_blank">
+          <i className="fas fa-external-link-alt"></i>
+          <span>Xem website</span>
+        </Link>
         
-        <div className="admin-header-right">
-          <div className="admin-user-info">
-            <img 
-              src={currentUser?.picture 
-                ? `http://localhost:5000${currentUser.picture}` 
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'Admin')}&background=random`} 
-              alt={currentUser?.name}
-              className="admin-avatar"
-            />
-            <span className="admin-username">{currentUser?.name}</span>
-          </div>
-          
-          <div className="admin-actions">
-            <Link to="/dashboard" className="admin-view-site">
-              <i className="fas fa-external-link-alt"></i> Xem trang chính
-            </Link>
-            <button onClick={handleLogout} className="admin-logout">
-              <i className="fas fa-sign-out-alt"></i> Đăng xuất
-            </button>
-          </div>
+        <div className="admin-user-info">
+          <span>{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).name : 'Admin'}</span>
+          <img 
+            src={localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).picture 
+              ? `http://localhost:5000${JSON.parse(localStorage.getItem('user')).picture}` 
+              : '/default-avatar.jpg'} 
+            alt="Admin" 
+            className="admin-avatar" 
+          />
         </div>
       </div>
     </header>
