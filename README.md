@@ -1,4 +1,4 @@
-Recipe Sharing Application - Ứng dụng Chia sẻ Công thức Nấu ăn
+Recipe Sharing Application - Ứng dụng Chia sẻ Công thức Nấu ăn\n
 Ứng dụng web cho phép người dùng đăng, tìm kiếm, lưu và chia sẻ công thức nấu ăn với cộng đồng.
 
 Mô tả dự án
