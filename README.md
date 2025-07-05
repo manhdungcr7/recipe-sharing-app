@@ -96,5 +96,73 @@ Dự án gồm 2 phần chính:
 - MySQL v8 trở lên
 - NPM hoặc Yarn
 
+## ⚙️ Cài đặt và chạy dự án
+
+### ✅ Yêu cầu hệ thống
+
+- Node.js v14 trở lên  
+- MySQL v8 trở lên  
+- NPM hoặc Yarn
+
+---
+
+### 🧪 Các bước cài đặt
+
+#### 🔹 Bước 1: Cài đặt Backend
+
+```bash
+cd recipe-sharing-backend
+npm install
+🔹 Bước 2: Cấu hình Database
+Tạo cơ sở dữ liệu MySQL:
+
+sql
+Sao chép
+Chỉnh sửa
+CREATE DATABASE recipe_sharing;
+Import dữ liệu từ file db-init.sql:
+
+bash
+Sao chép
+Chỉnh sửa
+# Dùng MySQL CLI hoặc công cụ như phpMyAdmin
+source path/to/db-init.sql
+🔹 Bước 3: Cấu hình Environment Variables
+Tạo file .env trong thư mục recipe-sharing-backend với nội dung sau:
+
+env
+Sao chép
+Chỉnh sửa
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=recipe_sharing
+JWT_SECRET=your_jwt_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+🔐 Lưu ý: Không commit file .env lên Git để bảo mật thông tin nhạy cảm.
+
+🔹 Bước 4: Cài đặt Frontend
+bash
+Sao chép
+Chỉnh sửa
+cd recipe-sharing-app
+npm install
+🔹 Bước 5: Chạy ứng dụng
+▶️ Backend:
+bash
+Sao chép
+Chỉnh sửa
+cd recipe-sharing-backend
+npm run dev
+Server sẽ chạy tại http://localhost:5000
+
+▶️ Frontend:
+bash
+Sao chép
+Chỉnh sửa
+cd recipe-sharing-app
+npm start
+Ứng dụng React sẽ khởi động tại http://localhost:3000
+
 
 
