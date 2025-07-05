@@ -108,9 +108,8 @@ Dự án gồm 2 phần chính:
 
 ### 🧪 Các bước cài đặt
 
-#### 🔹 Bước 1: Cài đặt Backend
-
 ```bash
+🔹 Bước 1: Cài đặt Backend
 cd recipe-sharing-backend
 npm install
 🔹 Bước 2: Cấu hình Database
